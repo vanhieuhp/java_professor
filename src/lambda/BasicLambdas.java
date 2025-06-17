@@ -18,6 +18,9 @@ public class BasicLambdas {
         I lambdaI = () -> {
             System.out.println("Lambda version");
         };
+
+        System.out.println("Xin Chao Ban Linh Dan");
+
         I lambdaI2 = () -> System.out.println("Lambda version 2");
         lambdaI.m();
         lambdaI2.m();
