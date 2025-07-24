@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: tasks
+  main:
+    allow-bean-definition-overriding: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      connect-timeout: 6000
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/epayjsc?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: admin
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect # Use MySQL8Dialect if you're on MySQL 8.x
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+redis:
+  keys:
+    cardInfo:
+      timeToLive: PT30S
