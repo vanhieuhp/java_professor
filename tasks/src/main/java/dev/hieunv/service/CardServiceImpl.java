@@ -1,8 +1,8 @@
 package dev.hieunv.service;
 
 import dev.hieunv.controller.CardInfoConverter;
-import dev.hieunv.controller.dto.card.CardInfoRequestDto;
-import dev.hieunv.controller.dto.card.CardInfoResponseDto;
+import dev.hieunv.domain.dto.card.CardInfoRequestDto;
+import dev.hieunv.domain.dto.card.CardInfoResponseDto;
 import dev.hieunv.domain.mappers.CardInfoEntityMapper;
 import dev.hieunv.domain.model.CardInfo;
 import dev.hieunv.repository.CardInfoRepository;

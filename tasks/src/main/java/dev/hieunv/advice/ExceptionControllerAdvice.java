@@ -1,4 +1,4 @@
-package dev.hieunv.controller.advice;
+package dev.hieunv.advice;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;

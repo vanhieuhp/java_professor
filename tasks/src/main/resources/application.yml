@@ -30,3 +30,7 @@ redis:
   keys:
     cardInfo:
       timeToLive: PT30S
+
+app:
+  crypto:
+    key: ThhJJ7YbMgm7ELo590J2sIO+y3vqEt2ZOVDQuaxqllE=

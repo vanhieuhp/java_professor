@@ -1,4 +1,4 @@
-package dev.hieunv.controller.dto.account;
+package dev.hieunv.domain.dto.card;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
@@ -8,17 +8,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+
 @Builder
 @Getter
-@ToString
+@ToString(exclude = {"cvv"})
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class UserNameDto {
-
+public class CardDetailsResponseDto {
     @NotBlank
-    private String firstName;
-
+    private String pan;
     @NotBlank
-    private String lastName;
+    private String cvv;
 }

@@ -1,10 +1,7 @@
-package dev.hieunv.controller.dto.card;
+package dev.hieunv.domain.dto.account;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import dev.hieunv.controller.dto.account.UserNameDto;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,18 +10,15 @@ import lombok.ToString;
 
 @Builder
 @Getter
-@ToString(exclude = "cardDetails")
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CardInfoRequestDto {
+public class UserNameDto {
 
     @NotBlank
-    private String id;
+    private String firstName;
 
-    @Valid
-    private UserNameDto fullName;
-
-    @NotNull
-    private String cardDetails;
+    @NotBlank
+    private String lastName;
 }

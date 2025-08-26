@@ -1,7 +1,7 @@
 package dev.hieunv.controller;
 
-import dev.hieunv.controller.dto.card.CardInfoRequestDto;
-import dev.hieunv.controller.dto.card.CardInfoResponseDto;
+import dev.hieunv.domain.dto.card.CardInfoRequestDto;
+import dev.hieunv.domain.dto.card.CardInfoResponseDto;
 import dev.hieunv.service.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

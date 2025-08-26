@@ -1,10 +1,10 @@
 package dev.hieunv.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.hieunv.controller.dto.account.UserNameDto;
-import dev.hieunv.controller.dto.card.CardDetailsResponseDto;
-import dev.hieunv.controller.dto.card.CardInfoRequestDto;
-import dev.hieunv.controller.dto.card.CardInfoResponseDto;
+import dev.hieunv.domain.dto.account.UserNameDto;
+import dev.hieunv.domain.dto.card.CardDetailsResponseDto;
+import dev.hieunv.domain.dto.card.CardInfoRequestDto;
+import dev.hieunv.domain.dto.card.CardInfoResponseDto;
 import dev.hieunv.domain.model.CardDetails;
 import dev.hieunv.domain.model.CardInfo;
 import dev.hieunv.domain.model.UserName;

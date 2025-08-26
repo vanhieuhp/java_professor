@@ -1,7 +1,7 @@
-package dev.hieunv.controller.dto.card;
+package dev.hieunv.domain.dto.card;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import dev.hieunv.controller.dto.account.UserNameDto;
+import dev.hieunv.domain.dto.account.UserNameDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
