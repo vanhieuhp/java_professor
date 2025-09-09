@@ -1,0 +1,21 @@
+name: 'postgres'
+
+services:
+  postgres:
+    image: 'postgres:17-alpine'
+    container_name: postgres
+    command: [ "postgres", "-c", "log_statement=all" ]
+    environment:
+      - POSTGRES_DB=trigram-demo
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+    ports:
+      - '5432:5432'
+    restart: unless-stopped
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+
+volumes:
+  postgres_db:
+    name: postgres_db
+    driver: local

@@ -42,10 +42,10 @@ public class EncryptResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
     public static boolean wantsEncrypted(ServerHttpRequest request) {
         HttpHeaders h = request.getHeaders();
-        boolean header = "1".equals(h.getFirst("X-Encrypted"));
-        boolean accept = h.getAccept().stream()
-                .anyMatch(mt -> mt.isCompatibleWith(MediaType.valueOf("application/encrypted+json")));
+        boolean header = "1".equals(h.getFirst("x-encrypted"));
+//        boolean accept = h.getAccept().stream()
+//                .anyMatch(mt -> mt.isCompatibleWith(MediaType.valueOf("application/encrypted+json")));
 
-        return header || accept;
+        return header;
     }
 }
