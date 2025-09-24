@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  grpcurl:
+    build: .
+    image: local/grpcurl:ubuntu22.04
+    container_name: grpcurl
+    restart: "no"
+
+
