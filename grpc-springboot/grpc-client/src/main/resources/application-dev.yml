@@ -7,6 +7,10 @@ grpc:
     grpc-devhieunv-service:
       address: static://localhost:9001
       negotiation-type: plaintext
+  api-key: hieunv.dev
+#      negotiation-type: TLS
+#      security:
+#        trust-cert-collection: classpath:certs/localhost.cert.pem
 
 server:
   port: 9010

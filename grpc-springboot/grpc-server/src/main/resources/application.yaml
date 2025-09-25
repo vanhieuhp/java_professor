@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: grpc-server
+
+grpc:
+  server:
+    port: 9001
+  api-key: hieunv.dev
+#    security:
+#      enabled: true
+#      certificate-chain: classpath:certs/localhost.crt
+#      private-key: classpath:certs/localhost.pem
+server:
+  port: 9000
+

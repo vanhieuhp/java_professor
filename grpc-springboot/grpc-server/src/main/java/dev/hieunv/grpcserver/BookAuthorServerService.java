@@ -1,12 +1,15 @@
 package dev.hieunv.grpcserver;
 
 import dev.hieunv.grpc.Author;
+import dev.hieunv.grpc.Book;
 import dev.hieunv.grpc.BookAuthorServiceGrpc;
 import dev.hieunv.grpc.TempDb;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.grpc.server.service.GrpcService;
+import net.devh.boot.grpc.server.service.GrpcService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -30,5 +33,68 @@ public class BookAuthorServerService extends BookAuthorServiceGrpc.BookAuthorSer
         } catch (Exception e) {
             responseObserver.onError(new RuntimeException("Error retrieving author: " + e.getMessage()));
         }
+    }
+
+    @Override
+    public void getBooksByAuthor(Author request, StreamObserver<Book> responseObserver) {
+        TempDb.getBooksFromTempDb()
+                .stream()
+                .filter(book -> book.getAuthorId() ==  request.getAuthorId())
+                .forEach(responseObserver::onNext);
+        log.info("Get Books by Author: {}", request.getAuthorId());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public StreamObserver<Book> getExpensiveBook(StreamObserver<Book> responseObserver) {
+        return new StreamObserver<>() {
+            Book expensiveBook = null;
+            float priceTrack = 0;
+
+            @Override
+            public void onNext(Book book) {
+                if (book.getPrice() > priceTrack) {
+                    priceTrack = book.getPrice();
+                    expensiveBook = book;
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                responseObserver.onError(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                responseObserver.onNext(expensiveBook);
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+    @Override
+    public StreamObserver<Book> getBookByAuthorGender(StreamObserver<Book> responseObserver) {
+        return new StreamObserver<>() {
+            List<Book> bookList = new ArrayList<>();
+
+            @Override
+            public void onNext(Book book) {
+                TempDb.getBooksFromTempDb()
+                        .stream()
+                        .filter(booksFromDb -> book.getAuthorId() == booksFromDb.getAuthorId())
+                        .forEach(bookList::add);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                responseObserver.onError(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                bookList.forEach(responseObserver::onNext);
+                responseObserver.onCompleted();
+            }
+        };
     }
 }
