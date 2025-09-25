@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class GrpcHealthChecker {
 
     @GrpcClient("grpc-devhieunv-service")
-    private HealthGrpc.HealthBlockingStub healthStub;
+    HealthGrpc.HealthBlockingStub healthStub;
 
     @EventListener(ApplicationReadyEvent.class)
     public void checkServerHealth() {

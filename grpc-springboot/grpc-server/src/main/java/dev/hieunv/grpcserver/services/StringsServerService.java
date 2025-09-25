@@ -1,4 +1,4 @@
-package dev.hieunv.grpcserver.service;
+package dev.hieunv.grpcserver.services;
 
 import dev.hieunv.grpc.strings.Request;
 import dev.hieunv.grpc.strings.Response;
