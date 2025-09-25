@@ -21,9 +21,13 @@ public class TempDb {
     public static List<Book> getBooksFromTempDb() {
         List<Book> books = new ArrayList<>();
         books.add(Book.newBuilder().setBookId(1).setTitle("Great Expectations").setPrice(10.99f).setPages(200).setAuthorId(1).build());
-        books.add(Book.newBuilder().setBookId(2).setTitle("Jane Austen").setPrice(12.99f).setPages(250).setAuthorId(2).build());
-        books.add(Book.newBuilder().setBookId(3).setTitle("Mark Twain").setPrice(14.99f).setPages(300).setAuthorId(3).build());
-        books.add(Book.newBuilder().setBookId(4).setTitle("William Shakespeare").setPrice(16.99f).setPages(350).setAuthorId(4).build());
+        books.add(Book.newBuilder().setBookId(2).setTitle("Pride and Prejudice").setPrice(12.99f).setPages(250).setAuthorId(2).build());
+        books.add(Book.newBuilder().setBookId(3).setTitle("The Adventures of Tom Sawyer").setPrice(14.99f).setPages(300).setAuthorId(3).build());
+        books.add(Book.newBuilder().setBookId(4).setTitle("Hamlet").setPrice(16.99f).setPages(350).setAuthorId(4).build());
+        books.add(Book.newBuilder().setBookId(5).setTitle("War and Peace").setPrice(18.99f).setPages(1200).setAuthorId(5).build());
+        books.add(Book.newBuilder().setBookId(6).setTitle("Mrs. Dalloway").setPrice(13.99f).setPages(200).setAuthorId(6).build());
+        books.add(Book.newBuilder().setBookId(7).setTitle("Harry Potter and the Philosopher's Stone").setPrice(15.99f).setPages(320).setAuthorId(7).build());
+        books.add(Book.newBuilder().setBookId(8).setTitle("Murder on the Orient Express").setPrice(11.99f).setPages(256).setAuthorId(8).build());
         return books;
     }
 }

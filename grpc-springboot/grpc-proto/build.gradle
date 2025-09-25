@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.5.6'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.google.protobuf' version '0.9.4'
+    id 'maven-publish'
 }
 
 group = 'dev.hieunv.grpc-proto'
@@ -66,4 +67,52 @@ protobuf {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// Create a custom jar task for publishing only the generated protobuf classes
+task protoJar(type: Jar) {
+    from sourceSets.main.output
+    include 'dev/hieunv/grpc/**'
+    include 'main/proto/**'
+    archiveBaseName = 'grpc-proto'
+    archiveVersion = '0.0.1-SNAPSHOT'
+}
+
+// Publishing configuration for Maven Local
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact protoJar
+            
+            groupId = 'dev.hieunv.grpc-proto'
+            artifactId = 'grpc-proto'
+            version = '0.0.1-SNAPSHOT'
+            
+            pom {
+                name = 'gRPC Proto'
+                description = 'Protocol buffer definitions and generated classes for gRPC services'
+                
+                // Add minimal dependencies
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    
+                    // Add gRPC dependencies with versions
+                    def grpcStub = dependenciesNode.appendNode('dependency')
+                    grpcStub.appendNode('groupId', 'io.grpc')
+                    grpcStub.appendNode('artifactId', 'grpc-stub')
+                    grpcStub.appendNode('version', '1.58.0')
+                    
+                    def grpcProtobuf = dependenciesNode.appendNode('dependency')
+                    grpcProtobuf.appendNode('groupId', 'io.grpc')
+                    grpcProtobuf.appendNode('artifactId', 'grpc-protobuf')
+                    grpcProtobuf.appendNode('version', '1.58.0')
+                    
+                    def protobufJava = dependenciesNode.appendNode('dependency')
+                    protobufJava.appendNode('groupId', 'com.google.protobuf')
+                    protobufJava.appendNode('artifactId', 'protobuf-java')
+                    protobufJava.appendNode('version', '3.25.1')
+                }
+            }
+        }
+    }
 }

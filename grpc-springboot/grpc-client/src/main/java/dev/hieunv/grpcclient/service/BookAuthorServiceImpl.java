@@ -5,6 +5,7 @@ import dev.hieunv.grpc.Author;
 import dev.hieunv.grpc.BookAuthorServiceGrpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;

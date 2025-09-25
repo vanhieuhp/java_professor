@@ -1,9 +1,0 @@
-spring:
-  application:
-    name: grpc-client
-
-grpc:
-  client:
-    grpc-devhieunv-service:
-      address: static://localhost:9000
-      negotiationType: plaintext
