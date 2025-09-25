@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+package dev.hieunv.grpc;
+
+message File {
+  bytes content = 1;
+}
+
+message FileUploadRequest {
+  File file = 1;
+}
+
+enum UploadStatus {
+  SUCCESS = 0;
+  FAILED = 1;
+}
+
+message FileUploadResponse {
+  string fileName = 1;
+  UploadStatus uploadStatus = 2;
+}
+
+message FileMetadata {
+  string fileNameWithType = 1;
+  int32 contentLength = 2;
+}
+
+service FileUploadService {
+  rpc uploadFile(stream FileUploadRequest) returns (FileUploadResponse) {}
+}
