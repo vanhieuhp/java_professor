@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Slf4j
 @GrpcService
-public class BookAuthorServerService extends BookAuthorServiceGrpc.BookAuthorServiceImplBase {
+public class BookAuthorGrpcService extends BookAuthorServiceGrpc.BookAuthorServiceImplBase {
 
     @Override
     public void getAuthor(Author request, StreamObserver<Author> responseObserver) {

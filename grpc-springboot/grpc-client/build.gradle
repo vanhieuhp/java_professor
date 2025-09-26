@@ -40,6 +40,7 @@ dependencies {
 
     implementation 'dev.hieunv.grpc-proto:grpc-proto:0.0.1-SNAPSHOT'
     implementation 'net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE'
+    implementation 'com.google.api.grpc:proto-google-common-protos:2.61.2'
 }
 
 dependencyManagement {

@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+
+import "google/protobuf/empty.proto";
+
+package dev.hieunv.grpc;
+
+message Customer {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message CustomError {
+  string errorType = 1;
+  string message = 2;
+}
+
+message CustomerDetails {
+  oneof message {
+    Customer customer = 1;
+    CustomError customError = 2;
+  }
+}
+
+service CustomerService {
+  rpc getCustomer(Customer) returns (Customer) {}
+  rpc getCustomers(google.protobuf.Empty) returns (stream CustomerDetails) {}
+}

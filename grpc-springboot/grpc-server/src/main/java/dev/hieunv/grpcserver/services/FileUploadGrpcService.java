@@ -16,7 +16,7 @@ import java.io.IOException;
 
 @GrpcService
 @Slf4j
-public class FileUploadServiceImpl extends FileUploadServiceGrpc.FileUploadServiceImplBase implements FileUploadService {
+public class FileUploadGrpcService extends FileUploadServiceGrpc.FileUploadServiceImplBase {
 
     @Override
     public StreamObserver<FileUploadRequest> uploadFile(StreamObserver<FileUploadResponse> responseObserver) {

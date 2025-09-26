@@ -11,7 +11,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @RequiredArgsConstructor
 @Slf4j
 @GrpcService
-public class StringsServerService extends StringsServiceGrpc.StringsServiceImplBase {
+public class StringsGrpcService extends StringsServiceGrpc.StringsServiceImplBase {
 
     @Override
     public void getUpperCaseString(Request request, StreamObserver<Response> responseObserver) {
