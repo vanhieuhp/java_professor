@@ -22,7 +22,7 @@ import java.util.concurrent.CountDownLatch;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CustomerServiceImpl implements CustomerService{
+public class CustomerServiceImpl implements CustomerService {
 
     @GrpcClient("grpc-devhieunv-service")
     CustomerServiceGrpc.CustomerServiceBlockingStub syncClient;

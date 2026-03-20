@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package account.v1;
+import "common.proto";
+
+option java_multiple_files = true;
+option java_package = "com.epay.services.wallet.enterprise_client_api.grpc.v1.wallet";
+option java_outer_classname = "WalletMessagesProto";
+
+// Request message for getting account info
+message GetAccountInfoRequest {
+  string account_number = 1;
+}
+
+// Wallet Service definition
+service AccountGrpcService {
+  rpc GetAccountInfo(GetAccountInfoRequest) returns (common.v1.GrpcResponse); // AccountInfo
+}

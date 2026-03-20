@@ -1,12 +1,37 @@
 spring:
   application:
     name: grpc-client
+  security:
+    user:
+      name: admin
+      password: admin123
+      roles: ADMIN
+  cache:
+    type: simple
+    cache-names:
+      - walletAccountInfo
+  retry:
+    enabled: true
+
+# Management endpoints configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
 grpc:
   client:
     grpc-devhieunv-service:
       address: static://localhost:9001
       negotiation-type: plaintext
+    wallet-core-grpc-server:
+      address: static://wallet-core-v3-dev.epayservices.com.vn:30402
+      negotiation-type: plaintext
+#      address: static://localhost:9095
   api-key: hieunv.dev
 #      negotiation-type: TLS
 #      security:
@@ -14,3 +39,5 @@ grpc:
 
 server:
   port: 9010
+  servlet:
+    context-path: /api

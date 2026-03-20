@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package common.v1;
+
+option java_multiple_files = true;
+
+// Response message for getting account info
+message GrpcResponse {
+  string code = 1;
+  string message = 2;
+  Data data = 3;
+}
+
+// Wallet Account Info message
+message GetAccountInfoResponse  {
+  int64 accountId = 1;
+  string accountNumber = 2;
+  string customerId = 3;
+  string accountStatus = 4;
+  string customerStatus = 5;
+  string currency = 6;
+  string availableBalance = 7;
+  string currentBalance = 8;
+  string earmarkBalance = 9;
+  string overdraftLimit = 10;
+  string paylaterBalance = 11;
+  string paylaterLimit = 12;
+  string monthlyLimitAmount = 13;
+  string remainingDailyAmount = 14;
+  string remainingMonthlyAmount = 15;
+}
+
+message Data {
+  oneof payload {
+    GetAccountInfoResponse accountInfo = 1;
+  }
+}

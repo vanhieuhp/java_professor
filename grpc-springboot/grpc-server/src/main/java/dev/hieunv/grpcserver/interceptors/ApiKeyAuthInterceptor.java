@@ -6,12 +6,11 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Objects;
 
-@GrpcGlobalServerInterceptor
+//@GrpcGlobalServerInterceptor
 @Slf4j
 public class ApiKeyAuthInterceptor implements ServerInterceptor {
 

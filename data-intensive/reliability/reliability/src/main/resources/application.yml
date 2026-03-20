@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: reliability
+
+resilience4j:
+  retry:
+    instances:
+      bankService:
+        max-attempts: 3
+        wait-duration: 500ms
+  circuitbreaker:
+    instances:
+      bankService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, circuitbreakers, prometheus
+  metrics:
+    tags:
+      application: scalable-demo
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
