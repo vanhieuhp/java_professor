@@ -1,7 +1,5 @@
 package java_effective.accessibility.bad;
 
-import io.lettuce.core.event.EventBus;
-
 public class MortgageApplication {
     private final String applicantName;
     private final double amount;

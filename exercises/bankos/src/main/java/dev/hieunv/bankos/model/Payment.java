@@ -35,4 +35,18 @@ public class Payment {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
+
+    public Payment(Long accountId, BigDecimal amount) {
+        this.accountId = accountId;
+        this.amount = amount;
+    }
+
+    public Payment(Long accountId, BigDecimal amount, String idempotencyKey) {
+        this.accountId = accountId;
+        this.amount = amount;
+        this.idempotencyKey = idempotencyKey;
+    }
 }

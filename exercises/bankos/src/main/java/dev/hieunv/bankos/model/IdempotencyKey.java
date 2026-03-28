@@ -29,6 +29,14 @@ public class IdempotencyKey {
     @Column(name = "idempotency_key", nullable = false, unique = true)
     private String idempotencyKey;
 
+    @Column(name = "payment_id")
     private Long paymentId;
+
+    @Column(name = "processed_at")
     private LocalDateTime processedAt;
+
+    public IdempotencyKey(String idempotencyKey, Long paymentId) {
+        this.idempotencyKey = idempotencyKey;
+        this.paymentId = paymentId;
+    }
 }

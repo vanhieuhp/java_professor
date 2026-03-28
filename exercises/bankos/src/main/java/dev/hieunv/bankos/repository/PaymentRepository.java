@@ -7,6 +7,5 @@ import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    // Used in the fix — find by idempotency key
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 }
