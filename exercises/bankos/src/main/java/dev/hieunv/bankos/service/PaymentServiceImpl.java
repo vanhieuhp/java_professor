@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -89,6 +90,23 @@ public class PaymentServiceImpl implements PaymentService {
                 + " → Payment ID: " + payment.getId()
                 + " → balance: $" + account.getBalance());
 
+        return payment;
+    }
+
+    @Transactional
+    @Override
+    public Payment insertPendingPayment(Long accountId, BigDecimal amount) {
+        String key = UUID.randomUUID().toString();
+        Payment payment = Payment.builder()
+                .accountId(accountId)
+                .amount(amount)
+                .idempotencyKey(key)
+                .status("PENDING")
+                .build();
+        paymentRepository.save(payment);
+        System.out.println("[Payment] Inserted PENDING $" + amount
+                + " for Account " + accountId
+                + " → Payment ID: " + payment.getId());
         return payment;
     }
 

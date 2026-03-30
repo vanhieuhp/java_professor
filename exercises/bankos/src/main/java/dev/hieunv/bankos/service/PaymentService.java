@@ -19,4 +19,7 @@ public interface PaymentService {
             Long accountId,
             BigDecimal amount,
             String idempotencyKey);
+
+    @Transactional
+    Payment insertPendingPayment(Long accountId, BigDecimal amount);
 }

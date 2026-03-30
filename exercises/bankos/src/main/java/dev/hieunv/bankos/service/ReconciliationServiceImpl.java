@@ -1,6 +1,8 @@
 package dev.hieunv.bankos.service;
 
+import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.repository.AccountRepository;
+import dev.hieunv.bankos.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -15,6 +18,7 @@ import java.math.BigDecimal;
 public class ReconciliationServiceImpl implements ReconciliationService{
 
     private final AccountRepository accountRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -64,5 +68,54 @@ public class ReconciliationServiceImpl implements ReconciliationService{
         } else {
             System.out.println("[Reconciliation] Report consistent — snapshot held.");
         }
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @Override
+    public void reconcilePendingFeesRepeatableRead(List<Long> accountIds) throws InterruptedException {
+        System.out.println("\n[Reconciliation] Starting with REPEATABLE_READ...");
+
+        BigDecimal firstSum = calculatePendingTotal(accountIds);
+        System.out.println("[Reconciliation] First sum:  $" + firstSum);
+
+        Thread.sleep(1500);
+
+        BigDecimal secondSum = calculatePendingTotal(accountIds);
+        System.out.println("[Reconciliation] Second sum: $" + secondSum);
+
+        if (firstSum.compareTo(secondSum) != 0) {
+            System.out.println("[Reconciliation] PHANTOM READ DETECTED!");
+        } else {
+            System.out.println("[Reconciliation] Sums match — phantom prevented.");
+        }
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Override
+    public void reconcilePendingFeesSerializable(List<Long> accountIds) throws InterruptedException {
+        System.out.println("\n[Reconciliation] Starting with SERIALIZABLE...");
+
+        BigDecimal firstSum = calculatePendingTotal(accountIds);
+        System.out.println("[Reconciliation] First sum:  $" + firstSum);
+
+        Thread.sleep(1500);
+
+        BigDecimal secondSum = calculatePendingTotal(accountIds);
+        System.out.println("[Reconciliation] Second sum: $" + secondSum);
+
+        if (firstSum.compareTo(secondSum) != 0) {
+            System.out.println("[Reconciliation] 💥 PHANTOM READ DETECTED!");
+        } else {
+            System.out.println("[Reconciliation] ✅ Sums match — phantom prevented.");
+        }
+    }
+
+    // Shared helper — sums all PENDING payments for given accounts
+    @Override
+    public BigDecimal calculatePendingTotal(List<Long> accountIds) {
+        return paymentRepository.findByAccountIdInAndStatus(accountIds, "PENDING")
+                .stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
