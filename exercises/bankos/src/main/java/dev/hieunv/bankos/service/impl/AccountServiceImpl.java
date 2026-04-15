@@ -1,9 +1,10 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.dto.AccountResponse;
 import dev.hieunv.bankos.dto.CreateAccountRequest;
 import dev.hieunv.bankos.model.Account;
 import dev.hieunv.bankos.repository.AccountRepository;
+import dev.hieunv.bankos.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,9 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.repository.AccountRepository;
 import dev.hieunv.bankos.repository.PaymentRepository;
+import dev.hieunv.bankos.service.ReconciliationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class ReconciliationServiceImpl implements ReconciliationService{
+public class ReconciliationServiceImpl implements ReconciliationService {
 
     private final AccountRepository accountRepository;
     private final PaymentRepository paymentRepository;

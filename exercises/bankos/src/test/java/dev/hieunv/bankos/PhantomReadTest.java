@@ -2,7 +2,7 @@ package dev.hieunv.bankos;
 
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.repository.PaymentRepository;
-import dev.hieunv.bankos.service.ReconciliationServiceImpl;
+import dev.hieunv.bankos.service.impl.ReconciliationServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

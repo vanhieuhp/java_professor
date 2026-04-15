@@ -1,8 +1,9 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.dto.TransferResult;
 import dev.hieunv.bankos.model.Account;
 import dev.hieunv.bankos.repository.AccountRepository;
+import dev.hieunv.bankos.service.TransferService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
