@@ -26,6 +26,7 @@ public class Product {
     private String name;
     private BigDecimal price;
     private int stock;
+    private String status;
 
     @Version
     private Long version; // Hibernate adds WHERE id=? AND version=? to every UPDATE
@@ -34,5 +35,6 @@ public class Product {
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.status = "PENDING";
     }
 }

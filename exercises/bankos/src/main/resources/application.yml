@@ -6,6 +6,11 @@ spring:
     username: admin
     password: password
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 5
+      connection-timeout: 3000   # fail fast — 3 seconds timeout
+      max-lifetime: 1800000
   jpa:
     hibernate:
       ddl-auto: update

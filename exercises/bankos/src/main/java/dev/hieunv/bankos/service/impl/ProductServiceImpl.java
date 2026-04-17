@@ -1,5 +1,7 @@
 package dev.hieunv.bankos.service.impl;
 
+import dev.hieunv.bankos.client.ExternalWarehouseClient;
+import dev.hieunv.bankos.dto.ProductDTO;
 import dev.hieunv.bankos.model.Product;
 import dev.hieunv.bankos.repository.ProductRepository;
 import dev.hieunv.bankos.service.ProductService;
@@ -17,6 +19,7 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ExternalWarehouseClient warehouseClient;
 
     @Transactional
     @Override
@@ -65,5 +68,57 @@ public class ProductServiceImpl implements ProductService {
         // Hibernate will throw ObjectOptimisticLockingFailureException here
         // if another transaction already modified this row (version mismatch).
         productRepository.save(product);
+    }
+
+    @Transactional
+    @Override
+    public ProductDTO createProductBroken(ProductDTO dto) {
+        // Step 1 — save product (connection acquired here)
+        Product product = new Product(dto.getName(), dto.getPrice(), dto.getStock());
+        productRepository.save(product);
+
+        // Step 2 — slow HTTP call (2 seconds!) connection still held!
+        warehouseClient.reserveStock(product.getId(), dto.getStock());
+
+        // Step 3 — update status
+        product.setStatus("RESERVED");
+
+        return toDTO(product);
+    }
+
+    @Override
+    public ProductDTO createProductFixed(ProductDTO dto) {
+        // Step 1 — save in short transaction → connection acquired and released immediately
+        Long productId = saveProductInTx(dto);
+
+        // Step 2 — HTTP call outside transaction — no connection held ✅
+        warehouseClient.reserveStock(productId, dto.getStock());
+
+        // Step 3 — update status in new short transaction
+        return updateStatusInTx(productId, "RESERVED");
+    }
+
+    @Transactional
+    public Long saveProductInTx(ProductDTO dto) {
+        Product product = new Product(dto.getName(), dto.getPrice(), dto.getStock());
+        productRepository.save(product);
+        return product.getId();
+        // transaction commits here → connection returned to pool immediately ✅
+    }
+
+    @Transactional
+    public ProductDTO updateStatusInTx(Long productId, String status) {
+        Product product = productRepository.findById(productId).orElseThrow();
+        product.setStatus(status);
+        return toDTO(product);
+        // transaction commits here → connection returned to pool immediately ✅
+    }
+
+    private ProductDTO toDTO(Product product) {
+        return ProductDTO.builder()
+                .name(product.getName())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .build();
     }
 }

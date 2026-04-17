@@ -22,12 +22,13 @@ public class FlashSaleServiceImpl implements FlashSaleService {
     @Transactional
     @Override
     public void decrementStock(Long productId, int quantity) {
-        Product p = productRepository.findById(productId).orElseThrow();
-        if (p.getStock() < quantity) {
-            throw new IllegalStateException("Not enough stock!");
-        }
-        p.setStock(p.getStock() - quantity);
-        productRepository.save(p);
+//        Product p = productRepository.findById(productId).orElseThrow();
+//        if (p.getStock() < quantity) {
+//            throw new IllegalStateException("Not enough stock!");
+//        }
+//        p.setStock(p.getStock() - quantity);
+        int updated = productRepository.decrementStock(productId, quantity);
+        if (updated == 0) throw new IllegalStateException("Out of stock");
     }
 
     @Retryable(
