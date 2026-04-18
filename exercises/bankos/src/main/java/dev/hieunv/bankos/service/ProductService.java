@@ -1,8 +1,11 @@
 package dev.hieunv.bankos.service;
 
 import dev.hieunv.bankos.dto.ProductDTO;
+import dev.hieunv.bankos.dto.ProductSearchDTO;
 import dev.hieunv.bankos.model.Product;
+import org.springframework.data.domain.Page;
 
+import java.awt.print.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -21,4 +24,6 @@ public interface ProductService {
     ProductDTO createProductBroken(ProductDTO dto);
 
     ProductDTO createProductFixed(ProductDTO dto);
+
+    Page<ProductDTO> searchProducts(ProductSearchDTO dto, int page, int size);
 }

@@ -1,0 +1,34 @@
+<config xmlns="http://www.ehcache.org/v3">
+
+    <!-- L2 cache region for Product entity -->
+    <cache alias="com.bankos.domain.Product">
+        <expiry>
+            <ttl unit="minutes">10</ttl>   <!-- evict after 10 minutes -->
+        </expiry>
+        <resources>
+            <heap unit="entries">1000</heap>          <!-- max 1000 products in memory -->
+            <offheap unit="MB">50</offheap>           <!-- overflow to off-heap -->
+        </resources>
+    </cache>
+
+    <!-- Query cache region -->
+    <cache alias="default-query-results-region">
+        <expiry>
+            <ttl unit="minutes">5</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">500</heap>
+        </resources>
+    </cache>
+
+    <!-- Timestamps cache — required when query cache is enabled -->
+    <cache alias="default-update-timestamps-region">
+        <expiry>
+            <none/>   <!-- never expires — Hibernate manages this internally -->
+        </expiry>
+        <resources>
+            <heap unit="entries">1000</heap>
+        </resources>
+    </cache>
+
+</config>

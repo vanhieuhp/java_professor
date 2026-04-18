@@ -9,6 +9,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import java.math.BigDecimal;
 
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Entity
 @Table(name = "products")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE) // ← enable L2 cache
 public class Product {
 
     @Id

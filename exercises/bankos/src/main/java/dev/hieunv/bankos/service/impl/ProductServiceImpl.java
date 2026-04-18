@@ -2,11 +2,17 @@ package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.client.ExternalWarehouseClient;
 import dev.hieunv.bankos.dto.ProductDTO;
+import dev.hieunv.bankos.dto.ProductSearchDTO;
+import dev.hieunv.bankos.dto.ProductSpecification;
 import dev.hieunv.bankos.model.Product;
 import dev.hieunv.bankos.repository.ProductRepository;
 import dev.hieunv.bankos.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,5 +126,18 @@ public class ProductServiceImpl implements ProductService {
                 .price(product.getPrice())
                 .stock(product.getStock())
                 .build();
+    }
+
+    @Override
+    public Page<ProductDTO> searchProducts(ProductSearchDTO filters, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Product> products = productRepository.findAll(
+                ProductSpecification.withFilters(filters), pageable);
+
+        return products.map(p -> ProductDTO.builder()
+                .name(p.getName())
+                .price(p.getPrice())
+                .stock(p.getStock())
+                .build());
     }
 }

@@ -1,14 +1,19 @@
 package dev.hieunv.bankos.controller;
 
 import dev.hieunv.bankos.dto.ProductDTO;
+import dev.hieunv.bankos.dto.ProductSearchDTO;
 import dev.hieunv.bankos.service.FlushModeProductService;
 import dev.hieunv.bankos.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -45,5 +50,26 @@ public class ProductController {
     @PostMapping("/fixed")
     public ProductDTO createProductFixed(@RequestBody ProductDTO dto) {
         return productService.createProductFixed(dto);
+    }
+
+    @GetMapping("/search")
+    public Page<ProductDTO> searchProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer minStock,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        ProductSearchDTO filters = ProductSearchDTO.builder()
+                .name(name)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .status(status)
+                .minStock(minStock)
+                .build();
+
+        return productService.searchProducts(filters, page, size);
     }
 }

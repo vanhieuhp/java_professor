@@ -35,6 +35,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.google.guava:guava:33.0.0-jre'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.hibernate.orm:hibernate-jcache'
+    implementation 'org.ehcache:ehcache:3.10.8'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'

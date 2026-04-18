@@ -17,11 +17,21 @@ spring:
     show-sql: true
     properties:
       hibernate:
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+            uri: classpath:ehcache.xml
         dialect: org.hibernate.dialect.PostgreSQLDialect
       jakarta:
         persistence:
           lock:
             timeout: 5000  # wait max 5 seconds for a lock, then throw
+
   springdoc:
     swagger-ui:
       path: /swagger-ui.html
