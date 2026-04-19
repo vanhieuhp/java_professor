@@ -1,11 +1,13 @@
 package dev.hieunv.bankos.controller;
 
-import dev.hieunv.bankos.dto.ProductDTO;
-import dev.hieunv.bankos.dto.ProductSearchDTO;
+import dev.hieunv.bankos.dto.product.ProductDTO;
+import dev.hieunv.bankos.dto.product.ProductSearchDTO;
+import dev.hieunv.bankos.service.FlashSaleService;
 import dev.hieunv.bankos.service.FlushModeProductService;
 import dev.hieunv.bankos.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,13 @@ public class ProductController {
 
     private final FlushModeProductService flushModeProductService;
     private final ProductService productService;
+    private final FlashSaleService flashSaleService;
+
+    @PostMapping("/seed")
+    public ResponseEntity<String> seed(@RequestParam(defaultValue = "100") int stock) {
+        Long productId = flashSaleService.seedStock(stock);
+        return ResponseEntity.ok("Seeded product id=" + productId + " stock=" + stock);
+    }
 
     @PostMapping("/flush/broken")
     public List<ProductDTO> saveThenQueryBroken(@RequestBody ProductDTO dto) {

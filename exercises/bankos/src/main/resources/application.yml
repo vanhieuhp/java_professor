@@ -18,14 +18,8 @@ spring:
     properties:
       hibernate:
         cache:
-          use_second_level_cache: true
-          use_query_cache: true
-          region:
-            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
-        javax:
-          cache:
-            provider: org.ehcache.jsr107.EhcacheCachingProvider
-            uri: classpath:ehcache.xml
+          use_second_level_cache: false
+          use_query_cache: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
       jakarta:
         persistence:
@@ -57,3 +51,39 @@ bankos:
     exchange-rate:
       redis-ttl-seconds: 30      # Redis TTL — refresh from DB every 30s
       local-ttl-seconds: 5       # Local TTL — refresh from Redis every 5s
+
+resilience4j:
+  bulkhead:
+    instances:
+      paymentGateway:
+        max-concurrent-calls: 5
+        max-wait-duration: 0ms
+
+  circuitbreaker:
+    instances:
+      paymentGateway:
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 80
+        slow-call-duration-threshold: 2000ms
+        sliding-window-size: 10
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 10s
+        permitted-calls-in-half-open-state: 3
+
+  retry:
+    instances:
+      paymentGateway:
+        max-attempts: 3
+        wait-duration: 200ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - java.lang.RuntimeException
+        ignore-exceptions:
+          - dev.hieunv.bankos.exception.PaymentBusinessException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers

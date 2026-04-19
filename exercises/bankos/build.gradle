@@ -3,6 +3,9 @@ plugins {
     id 'org.springframework.boot' version '4.0.4'
     id 'io.spring.dependency-management' version '1.1.7'
 }
+ext {
+    springCloudVersion = "2025.1.1"
+}
 
 group = 'dev.hieunv'
 version = '0.0.1-SNAPSHOT'
@@ -36,8 +39,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.google.guava:guava:33.0.0-jre'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'org.hibernate.orm:hibernate-jcache'
-    implementation 'org.ehcache:ehcache:3.10.8'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
@@ -45,6 +49,11 @@ dependencies {
     implementation("org.springframework.retry:spring-retry:2.0.12")
     implementation 'org.springframework:spring-aspects'
 
+}
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion"
+    }
 }
 
 tasks.named('test') {

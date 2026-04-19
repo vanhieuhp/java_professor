@@ -1,18 +1,17 @@
-package dev.hieunv.bankos.dto;
-
-import java.math.BigDecimal;
+package dev.hieunv.bankos.dto.payment;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductDTO {
-    private String name;
-    private BigDecimal price;
-    private int stock;
+public class PaymentRequest {
+    private Long accountId;
+    private BigDecimal amount;
 }

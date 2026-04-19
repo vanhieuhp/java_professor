@@ -21,4 +21,7 @@ public interface FlashSaleService {
 
     @Recover
     void recover(ObjectOptimisticLockingFailureException e, Long productId, int quantity);
+
+    @Transactional
+    Long seedStock(int stock);
 }

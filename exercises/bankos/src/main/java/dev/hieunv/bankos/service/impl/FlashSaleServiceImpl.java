@@ -12,6 +12,9 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -51,5 +54,14 @@ public class FlashSaleServiceImpl implements FlashSaleService {
     @Override
     public void recover(ObjectOptimisticLockingFailureException e, Long productId, int quantity) {
         throw new IllegalStateException("Out of stock after retries — too much contention");
+    }
+
+    @Transactional
+    @Override
+    public Long seedStock(int stock) {
+        Product product = new Product("Flash Sale Item", new java.math.BigDecimal("99.99"), stock);
+        productRepository.save(product);
+        log.info("[FlashSale] Seeded product id={} stock={}", product.getId(), stock);
+        return product.getId();
     }
 }

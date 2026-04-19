@@ -1,4 +1,4 @@
-package dev.hieunv.bankos.dto;
+package dev.hieunv.bankos.dto.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

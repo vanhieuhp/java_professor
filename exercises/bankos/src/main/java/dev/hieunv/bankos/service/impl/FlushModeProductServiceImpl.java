@@ -1,6 +1,6 @@
 package dev.hieunv.bankos.service.impl;
 
-import dev.hieunv.bankos.dto.ProductDTO;
+import dev.hieunv.bankos.dto.product.ProductDTO;
 import dev.hieunv.bankos.model.Product;
 import dev.hieunv.bankos.repository.ProductRepository;
 import dev.hieunv.bankos.service.FlushModeProductService;

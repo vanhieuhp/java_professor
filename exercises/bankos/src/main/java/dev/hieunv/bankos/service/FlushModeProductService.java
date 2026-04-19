@@ -1,6 +1,6 @@
 package dev.hieunv.bankos.service;
 
-import dev.hieunv.bankos.dto.ProductDTO;
+import dev.hieunv.bankos.dto.product.ProductDTO;
 
 import java.math.BigDecimal;
 import java.util.List;

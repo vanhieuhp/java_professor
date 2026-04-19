@@ -1,4 +1,4 @@
-package dev.hieunv.bankos.dto;
+package dev.hieunv.bankos.dto.product;
 
 import dev.hieunv.bankos.model.Product;
 import org.springframework.data.jpa.domain.Specification;

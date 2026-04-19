@@ -1,9 +1,9 @@
 package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.client.ExternalWarehouseClient;
-import dev.hieunv.bankos.dto.ProductDTO;
-import dev.hieunv.bankos.dto.ProductSearchDTO;
-import dev.hieunv.bankos.dto.ProductSpecification;
+import dev.hieunv.bankos.dto.product.ProductDTO;
+import dev.hieunv.bankos.dto.product.ProductSearchDTO;
+import dev.hieunv.bankos.dto.product.ProductSpecification;
 import dev.hieunv.bankos.model.Product;
 import dev.hieunv.bankos.repository.ProductRepository;
 import dev.hieunv.bankos.service.ProductService;
