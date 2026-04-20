@@ -82,8 +82,25 @@ resilience4j:
         ignore-exceptions:
           - dev.hieunv.bankos.exception.PaymentBusinessException
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: bankos-payment-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springfromwork.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: dev.hieunv.bankos.*
+
 management:
   endpoints:
     web:
       exposure:
         include: health,metrics,circuitbreakers
+server:
+  port: 8888
