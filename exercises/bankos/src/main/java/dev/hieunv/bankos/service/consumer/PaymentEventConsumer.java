@@ -1,4 +1,4 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.consumer;
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

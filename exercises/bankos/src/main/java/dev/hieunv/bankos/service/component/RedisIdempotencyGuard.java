@@ -1,4 +1,4 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.component;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

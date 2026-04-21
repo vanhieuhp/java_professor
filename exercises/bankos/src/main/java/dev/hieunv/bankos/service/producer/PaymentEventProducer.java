@@ -1,4 +1,4 @@
-package dev.hieunv.bankos.service;
+package dev.hieunv.bankos.service.producer;
 
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
 import lombok.RequiredArgsConstructor;

@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         cache:
@@ -45,6 +45,20 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=500,expireAfterWrite=5s # local cache TTL
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: bankos-payment-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: dev.hieunv.bankos.*
 
 bankos:
   cache:
@@ -82,21 +96,6 @@ resilience4j:
         ignore-exceptions:
           - dev.hieunv.bankos.exception.PaymentBusinessException
 
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: false
-    consumer:
-      group-id: bankos-payment-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springfromwork.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: dev.hieunv.bankos.*
-
 management:
   endpoints:
     web:
@@ -104,3 +103,4 @@ management:
         include: health,metrics,circuitbreakers
 server:
   port: 8888
+

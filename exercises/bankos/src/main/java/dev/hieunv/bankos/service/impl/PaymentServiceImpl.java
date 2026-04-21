@@ -2,7 +2,6 @@ package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.dto.payment.PaymentGatewayRequest;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayResponse;
-import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
 import dev.hieunv.bankos.exception.PaymentBusinessException;
 import dev.hieunv.bankos.model.Account;
 import dev.hieunv.bankos.model.IdempotencyKey;
@@ -12,9 +11,8 @@ import dev.hieunv.bankos.repository.AccountRepository;
 import dev.hieunv.bankos.repository.IdempotencyKeyRepository;
 import dev.hieunv.bankos.repository.OutboxEventRepository;
 import dev.hieunv.bankos.repository.PaymentRepository;
-import dev.hieunv.bankos.service.PaymentEventProducer;
 import dev.hieunv.bankos.service.PaymentService;
-import dev.hieunv.bankos.service.RedisIdempotencyGuard;
+import dev.hieunv.bankos.service.component.RedisIdempotencyGuard;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -45,7 +43,6 @@ public class PaymentServiceImpl implements PaymentService {
     private final OutboxEventRepository outboxEventRepository;  // ← new
     private final ObjectMapper objectMapper;                    // ← new
     private final RedisIdempotencyGuard redisGuard;  // ← new
-    private final PaymentEventProducer paymentEventProducer;
     @Transactional
     @Override
     public Payment processPayment(Long accountId, BigDecimal amount) {
@@ -213,23 +210,9 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.save(new Payment(accountId, amount, idempotencyKey));
 
         // Step 4 — write outbox event IN THE SAME TRANSACTION
-        // This is the critical difference from dual-write
-        // If this line throws → entire transaction rolls back including Step 3
         OutboxEvent event = buildOutboxEvent(payment);
         outboxEventRepository.save(event);
-// Publish to Kafka AFTER transaction boundary
-// Note: this is called from outside @Transactional — see PaymentController
-        PaymentProcessedEvent kafkaEvent = PaymentProcessedEvent.builder()
-                .paymentId(payment.getId())
-                .accountId(payment.getAccountId())
-                .amount(payment.getAmount())
-                .status("PROCESSED")
-                .processedAt(LocalDateTime.now())
-                .build();
-        paymentEventProducer.sendPaymentEvent(kafkaEvent);
-        log.info("[Outbox] Payment ID={} + OutboxEvent saved atomically", payment.getId());
 
-        // transaction commits here — both payment AND outbox event are durable
         return payment;
     }
 
