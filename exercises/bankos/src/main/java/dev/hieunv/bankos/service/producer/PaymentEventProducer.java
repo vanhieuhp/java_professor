@@ -14,13 +14,11 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class PaymentEventProducer {
     private static final String TOPIC = "payment-events";
-    private final KafkaTemplate<String, PaymentProcessedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendPaymentEvent(PaymentProcessedEvent event) {
-        // Key = accountId -> guarantees same account always hits same partition
         String key = event.getAccountId().toString();
-
-        CompletableFuture<SendResult<String, PaymentProcessedEvent>> future = kafkaTemplate.send(TOPIC, key, event);
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(TOPIC, key, event);
         future.whenComplete((result, ex) -> {
             if (ex != null) {
                 log.error("[Kafka] Failed to send paymentId={} accountId={} error={}",

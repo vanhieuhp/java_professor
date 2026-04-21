@@ -9,14 +9,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class PaymentDltConsumer {
 
-    @KafkaListener(topics = "payment-events.DLT", groupId = "bankos-dlt-group")
-    public void consumer(ConsumerRecord<String, Object> record) {
+    @KafkaListener(topics = "payment-events-dlt", groupId = "bankos-dlt-group")
+    public void consume(ConsumerRecord<String, Object> record) {
         log.warn("[DLT] Dead letter received — key={} partition={} offset={}",
                 record.key(),
                 record.partition(),
                 record.offset());
 
-        log.warn("[DLT] Headers: {}",
-                record.headers());
+        log.warn("[DLT] Headers: {}", record.headers());
     }
 }

@@ -1,8 +1,11 @@
 package dev.hieunv.bankos.service.outbox;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
 import dev.hieunv.bankos.model.OutboxEvent;
 import dev.hieunv.bankos.repository.OutboxEventRepository;
+import dev.hieunv.bankos.service.producer.PaymentEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -10,13 +13,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class OutboxRelayService {
     private final ObjectMapper objectMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private static final String PAYMENT_TOPIC = "payment-events";
+    private final PaymentEventProducer paymentEventProducer;
 
     // Polls every 2 seconds — in production this would be Debezium CDC
     // or a dedicated relay process reading the outbox table
@@ -67,7 +69,7 @@ public class OutboxRelayService {
         }
     }
 
-    private void publishToKafka(OutboxEvent event) throws ExecutionException, InterruptedException {
+    private void publishToKafka(OutboxEvent event) throws JsonProcessingException {
         Map<String, Object> payload = objectMapper.readValue(event.getPayload(), Map.class);
         if ("PAYMENT_PROCESSED".equals(event.getEventType())) {
             PaymentProcessedEvent kafkaEvent = PaymentProcessedEvent.builder()
@@ -78,8 +80,7 @@ public class OutboxRelayService {
                     .processedAt(LocalDateTime.now())
                     .build();
 
-            String key = kafkaEvent.getAccountId().toString();
-            kafkaTemplate.send(PAYMENT_TOPIC, key, kafkaEvent).get();
+            paymentEventProducer.sendPaymentEvent(kafkaEvent);
         }
 
         log.info("[Kafka] → topic=payment.processed payload={}", event.getPayload());

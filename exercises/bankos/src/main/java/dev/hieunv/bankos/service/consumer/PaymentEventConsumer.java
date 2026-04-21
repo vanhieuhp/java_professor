@@ -16,8 +16,9 @@ public class PaymentEventConsumer {
             groupId = "bankos-payment-group",
             containerFactory = "kafkaListenerContainerFactory"
     )
-    public void consume(ConsumerRecord<String, PaymentProcessedEvent> record) {
-        PaymentProcessedEvent event = record.value();
+    public void consume(ConsumerRecord<String, Object> record) {
+        PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();
+
         log.info("[Consumer] Received paymentId={} accountId={} amount={} " +
                         "partition={} offset={}",
                 event.getPaymentId(),

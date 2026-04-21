@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayRequest;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayResponse;
 import dev.hieunv.bankos.exception.PaymentBusinessException;
@@ -24,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
