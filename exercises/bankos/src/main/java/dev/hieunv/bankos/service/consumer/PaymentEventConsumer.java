@@ -5,13 +5,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 @Slf4j
 public class PaymentEventConsumer {
 
     @KafkaListener(
             topics = "payment-events",
-            groupId = "bankos-payment-group"
+            groupId = "bankos-payment-group",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, PaymentProcessedEvent> record) {
         PaymentProcessedEvent event = record.value();
@@ -22,7 +25,12 @@ public class PaymentEventConsumer {
                 event.getAmount(),
                 record.partition(),
                 record.offset());
-        // Phase 2 will add: idempotency check, DLT, retry logic
-        // For now — just verify the plumbing works
+
+        // simulate poison pill for testing retry logic
+        if (event.getAmount().compareTo(new BigDecimal("9000")) > 0) {
+            log.warn("[Consumer] Simulating failure for paymentId={} amount={}",
+                    event.getPaymentId(), event.getAmount());
+            throw new RuntimeException("Simulated processing failure");
+        }
     }
 }
