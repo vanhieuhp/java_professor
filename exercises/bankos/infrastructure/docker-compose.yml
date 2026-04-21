@@ -18,6 +18,8 @@ services:
       - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1      # ← add this
       - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0      # ← add this
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_NUM_PARTITIONS=3
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
