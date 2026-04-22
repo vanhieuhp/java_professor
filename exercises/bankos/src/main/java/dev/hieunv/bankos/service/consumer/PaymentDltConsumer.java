@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class PaymentDltConsumer {
 
-    @KafkaListener(topics = "payment-events-dlt", groupId = "bankos-dlt-group")
+    @KafkaListener(topics = "payment-events-dlt",
+            groupId = "bankos-dlt-group",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
     public void consume(ConsumerRecord<String, Object> record) {
         PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();
 

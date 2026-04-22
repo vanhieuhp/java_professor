@@ -2,7 +2,6 @@ package dev.hieunv.bankos.service.projector;
 
 import dev.hieunv.bankos.dto.balance.BalanceReadModel;
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
-import dev.hieunv.bankos.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -18,7 +17,6 @@ import java.time.LocalDateTime;
 @Slf4j
 public class BalanceProjector {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final AccountRepository accountRepository;
 
     private static final String BALANCE_KEY_PREFIX = "balance:account:";
     private static final Duration BALANCE_TTL = Duration.ofHours(1);

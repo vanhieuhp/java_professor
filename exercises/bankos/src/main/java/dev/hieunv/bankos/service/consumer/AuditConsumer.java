@@ -12,7 +12,8 @@ public class AuditConsumer {
 
     @KafkaListener(
             topics = "payment-events",
-            groupId = "bankos-audit-group"
+            groupId = "bankos-audit-group",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, Object> record) {
         PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();

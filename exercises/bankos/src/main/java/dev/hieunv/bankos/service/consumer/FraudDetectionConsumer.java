@@ -18,7 +18,8 @@ public class FraudDetectionConsumer implements ConsumerSeekAware {
 
     @KafkaListener(
             topics = "payment-events",
-            groupId = "bankos-fraud-group"
+            groupId = "bankos-fraud-group",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, Object> record) {
         PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();

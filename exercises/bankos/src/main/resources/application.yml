@@ -50,12 +50,15 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      batch-size: 16384     # 16KB default — fine for payment events
       properties:
-        spring.json.add.type.headers: false
+        spring.json.add.type.headers: true
+        spring.json.type.mapping: >
+          paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
+          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent
         linger.ms: 0          # send immediately — low latency for payments
         acks: all             # wait for all ISR replicas — durability
         retries: 3            # retry on transient broker failures
+        batch-size: 16384     # 16KB default — fine for payment events
     consumer:
       group-id: bankos-payment-group
       auto-offset-reset: earliest
@@ -64,10 +67,13 @@ spring:
       enable-auto-commit: false
       properties:
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
-        spring.json.value.default.type: "dev.hieunv.bankos.dto.payment.PaymentProcessedEvent"
-        spring.json.use.type.headers: "false"
+        spring.json.type.mapping: >
+          paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
+          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent
     listener:
       ack-mode: RECORD # acknowledge each record after processing
+    admin:
+      auto-create: true
 
 bankos:
   cache:

@@ -11,7 +11,8 @@ import org.springframework.stereotype.Component;
 public class NotificationConsumer {
     @KafkaListener(
             topics = "payment-events",
-            groupId = "bankos-notification-group"
+            groupId = "bankos-notification-group",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(ConsumerRecord<String, Object> record) {
         PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();
