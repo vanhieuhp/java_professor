@@ -5,11 +5,13 @@ import dev.hieunv.bankos.dto.BalanceResponse;
 import dev.hieunv.bankos.dto.CreateAccountRequest;
 import dev.hieunv.bankos.dto.DepositRequest;
 import dev.hieunv.bankos.dto.WithdrawRequest;
+import dev.hieunv.bankos.dto.balance.BalanceReadModel;
 import dev.hieunv.bankos.model.Account;
 import dev.hieunv.bankos.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,6 +31,7 @@ import java.util.List;
 public class AccountController {
 
     private final AccountService accountService;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @GetMapping
     @Operation(summary = "List all accounts")
@@ -75,5 +79,25 @@ public class AccountController {
         accountService.deposit(id, request.getAmount());
         BigDecimal balance = accountService.readBalanceSafe(id);
         return ResponseEntity.ok(new BalanceResponse(id, balance));
+    }
+
+    @GetMapping("/{id}/balance/fast")
+    @Operation(summary = "Get account balance from Redis read model (CQRS)")
+    public ResponseEntity<BalanceReadModel> getBalanceFast(@PathVariable Long id) {
+        String redisKey = "balance:account:" + id;
+        BalanceReadModel readModel = (BalanceReadModel) redisTemplate
+                .opsForValue().get(redisKey);
+
+        if (readModel == null) {
+            // Cache miss — fall back to DB
+            BigDecimal balance = accountService.readBalanceSafe(id);
+            readModel = BalanceReadModel.builder()
+                    .accountId(id)
+                    .balance(balance)
+                    .lastUpdatedAt(LocalDateTime.now())
+                    .build();
+        }
+
+        return ResponseEntity.ok(readModel);
     }
 }

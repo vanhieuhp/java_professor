@@ -210,20 +210,21 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = paymentRepository.save(new Payment(accountId, amount, idempotencyKey));
 
         // Step 4 — write outbox event IN THE SAME TRANSACTION
-        OutboxEvent event = buildOutboxEvent(payment);
+        OutboxEvent event = buildOutboxEvent(payment, account);
         outboxEventRepository.save(event);
 
         return payment;
     }
 
-    private OutboxEvent buildOutboxEvent(Payment payment) {
+    private OutboxEvent buildOutboxEvent(Payment payment, Account account) {
         try {
             String payload = objectMapper.writeValueAsString(Map.of(
                     "paymentId", payment.getId(),
                     "accountId", payment.getAccountId(),
                     "amount",    payment.getAmount().toString(),
                     "status",    "PROCESSED",
-                    "timestamp", LocalDateTime.now().toString()
+                    "timestamp", LocalDateTime.now().toString(),
+                    "balanceAfter", account.getBalance().toString()
             ));
             return OutboxEvent.builder()
                     .aggregateType("Payment")

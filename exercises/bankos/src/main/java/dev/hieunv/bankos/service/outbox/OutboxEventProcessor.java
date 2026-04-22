@@ -1,0 +1,68 @@
+package dev.hieunv.bankos.service.outbox;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
+import dev.hieunv.bankos.model.OutboxEvent;
+import dev.hieunv.bankos.repository.OutboxEventRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class OutboxEventProcessor {
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final String PAYMENT_TOPIC = "payment-events";
+
+    @Transactional
+    public void processEvent(OutboxEvent event) {
+        try {
+            publishToKafka(event);
+            event.setStatus("PUBLISHED");
+            event.setPublishedAt(LocalDateTime.now());
+            outboxEventRepository.save(event);
+            log.info("[Relay] Published eventId={} type={} aggregateId={}",
+                    event.getId(), event.getEventType(), event.getAggregateId());
+        } catch (Exception e) {
+            event.setRetryCount(event.getRetryCount() + 1);
+            if (event.getRetryCount() >= 3) {
+                event.setStatus("FAILED");
+                log.error("[Relay] Event ID={} failed after 3 retries — marked FAILED",
+                        event.getId());
+            } else {
+                log.warn("[Relay] Event ID={} publish failed retry={} — will retry",
+                        event.getId(), event.getRetryCount());
+            }
+            outboxEventRepository.save(event);
+        }
+    }
+
+    private void publishToKafka(OutboxEvent event) throws ExecutionException, InterruptedException, JsonProcessingException {
+        Map<String, Object> payload = objectMapper.readValue(event.getPayload(), Map.class);
+
+        if ("PAYMENT_PROCESSED".equals(event.getEventType())) {
+            PaymentProcessedEvent kafkaEvent = PaymentProcessedEvent.builder()
+                    .paymentId(event.getAggregateId())
+                    .accountId(Long.valueOf(payload.get("accountId").toString()))
+                    .amount(new BigDecimal(payload.get("amount").toString()))
+                    .status(payload.get("status").toString())
+                    .occurredAt(LocalDateTime.now())
+                    .build();
+
+            String key = kafkaEvent.getAccountId().toString();
+            kafkaTemplate.send(PAYMENT_TOPIC, key, kafkaEvent).get();
+        }
+    }
+}

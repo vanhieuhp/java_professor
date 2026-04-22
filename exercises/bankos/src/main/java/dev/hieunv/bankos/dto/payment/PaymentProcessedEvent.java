@@ -16,5 +16,7 @@ public class PaymentProcessedEvent {
     private Long accountId;
     private BigDecimal amount;
     private String status;
-    private LocalDateTime processedAt;
+    private LocalDateTime occurredAt;   // ← when payment actually happened (immutable)
+    private LocalDateTime processedAt;  // ← when THIS consumer processed it (set by consumer)
+    private BigDecimal balanceAfter;
 }
