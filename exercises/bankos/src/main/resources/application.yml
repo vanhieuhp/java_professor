@@ -56,7 +56,8 @@ spring:
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
           orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent,
           paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
-          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent
+          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent,
+          walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent
         linger.ms: 0          # send immediately — low latency for payments
         acks: all             # wait for all ISR replicas — durability
         retries: 3            # retry on transient broker failures
@@ -73,7 +74,8 @@ spring:
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
           orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent,
           paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
-          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent
+          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent,
+          walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent
     listener:
       ack-mode: RECORD # acknowledge each record after processing
     admin:
