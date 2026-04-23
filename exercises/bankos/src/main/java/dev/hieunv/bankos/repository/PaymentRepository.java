@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.repository;
 
+import dev.hieunv.bankos.enums.PaymentStatus;
 import dev.hieunv.bankos.model.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,5 +12,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 
     // Used by reconciliation service
-    List<Payment> findByAccountIdInAndStatus(List<Long> accountIds, String status);
+    List<Payment> findByAccountIdInAndStatus(List<Long> accountIds, PaymentStatus status);
 }

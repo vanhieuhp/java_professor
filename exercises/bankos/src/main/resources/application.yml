@@ -54,7 +54,9 @@ spring:
         spring.json.add.type.headers: true
         spring.json.type.mapping: >
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
-          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent
+          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent,
+          paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
+          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent
         linger.ms: 0          # send immediately — low latency for payments
         acks: all             # wait for all ISR replicas — durability
         retries: 3            # retry on transient broker failures
@@ -69,7 +71,9 @@ spring:
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
         spring.json.type.mapping: >
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
-          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent
+          orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent,
+          paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
+          paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent
     listener:
       ack-mode: RECORD # acknowledge each record after processing
     admin:

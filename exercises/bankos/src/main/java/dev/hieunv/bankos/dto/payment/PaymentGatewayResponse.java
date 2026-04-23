@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.dto.payment;
 
+import dev.hieunv.bankos.enums.GatewayStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentGatewayResponse {
-    private String status;       // "SUCCESS", "FAILED"
-    private String gatewayRef;   // reference ID từ gateway
+    private GatewayStatus status;
+    private String gatewayRef;
     private String message;
 }

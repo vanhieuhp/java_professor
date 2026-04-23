@@ -1,6 +1,9 @@
 package dev.hieunv.bankos.model;
 
+import dev.hieunv.bankos.enums.ProductStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +32,10 @@ public class Product {
     private String name;
     private BigDecimal price;
     private int stock;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private ProductStatus status;
+
     private String sagaId;
 
     @Version
@@ -39,6 +45,6 @@ public class Product {
         this.name = name;
         this.price = price;
         this.stock = stock;
-        this.status = "AVAILABLE";
+        this.status = ProductStatus.AVAILABLE;
     }
 }

@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.dto.product;
 
+import dev.hieunv.bankos.enums.ProductStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,6 @@ public class ProductSearchDTO {
     private String name;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
-    private String status;
+    private ProductStatus status;
     private Integer minStock;
 }

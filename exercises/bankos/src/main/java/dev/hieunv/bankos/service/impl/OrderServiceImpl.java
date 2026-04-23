@@ -3,6 +3,7 @@ package dev.hieunv.bankos.service.impl;
 import dev.hieunv.bankos.dto.order.OrderCreatedEvent;
 import dev.hieunv.bankos.dto.order.OrderRequest;
 import dev.hieunv.bankos.dto.order.OrderResponse;
+import dev.hieunv.bankos.enums.OrderStatus;
 import dev.hieunv.bankos.model.Order;
 import dev.hieunv.bankos.service.OrderService;
 import dev.hieunv.bankos.service.SagaStepService;
@@ -35,7 +36,7 @@ public class OrderServiceImpl implements OrderService {
             log.warn("[Saga:{}] Stock unavailable or already locked", sagaId);
             return OrderResponse.builder()
                     .sagaId(sagaId)
-                    .status("FAILED")
+                    .status(OrderStatus.FAILED)
                     .message("Product unavailable — already reserved or out of stock")
                     .build();
         }
@@ -62,7 +63,7 @@ public class OrderServiceImpl implements OrderService {
         return OrderResponse.builder()
                 .orderId(order.getId())
                 .sagaId(sagaId)
-                .status("PENDING")
+                .status(OrderStatus.PENDING)
                 .message("Order received — processing payment")
                 .build();
 
@@ -72,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse compensate(String sagaId) {
         return OrderResponse.builder()
                 .sagaId(sagaId)
-                .status("COMPENSATED")
+                .status(OrderStatus.COMPENSATED)
                 .message("Stock released")
                 .build();
     }

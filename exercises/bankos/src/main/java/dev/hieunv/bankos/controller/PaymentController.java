@@ -3,6 +3,7 @@ package dev.hieunv.bankos.controller;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayRequest;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayResponse;
 import dev.hieunv.bankos.dto.payment.PaymentRequest;
+import dev.hieunv.bankos.enums.GatewayStatus;
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +29,7 @@ public class PaymentController {
     public ResponseEntity<PaymentGatewayResponse> callGateway(
             @RequestBody PaymentGatewayRequest request) {
         PaymentGatewayResponse response = paymentService.callGatewayWithResilience(request);
-        return response.getStatus().equals("SUCCESS")
+        return response.getStatus() == GatewayStatus.SUCCESS
                 ? ResponseEntity.ok(response)
                 : ResponseEntity.status(503).body(response);
     }

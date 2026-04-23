@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.dto.product;
 
+import dev.hieunv.bankos.enums.ProductStatus;
 import dev.hieunv.bankos.model.Product;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
@@ -47,9 +48,9 @@ public class ProductSpecification {
         };
     }
 
-    public static Specification<Product> hasStatus(String status) {
+    public static Specification<Product> hasStatus(ProductStatus status) {
         return (root, query, cb) -> {
-            if (StringUtils.hasText(status)) return null;
+            if (status == null) return null;
             return cb.equal(root.get("status"), status);
         };
     }

@@ -2,6 +2,7 @@ package dev.hieunv.bankos.controller;
 
 import dev.hieunv.bankos.dto.order.OrderRequest;
 import dev.hieunv.bankos.dto.order.OrderResponse;
+import dev.hieunv.bankos.enums.OrderStatus;
 import dev.hieunv.bankos.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +25,7 @@ public class OrderController {
     @Operation(summary = "Place order — Saga with semantic lock")
     public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest request) {
         OrderResponse response = orderService.placeOrder(request);
-        int status = response.getStatus().equals("COMPLETED") ? 200 : 409;
+        int status = response.getStatus() == OrderStatus.COMPLETED ? 200 : 409;
         return ResponseEntity.status(status).body(response);
     }
 

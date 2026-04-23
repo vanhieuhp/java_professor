@@ -3,6 +3,9 @@ package dev.hieunv.bankos.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayRequest;
 import dev.hieunv.bankos.dto.payment.PaymentGatewayResponse;
+import dev.hieunv.bankos.enums.GatewayStatus;
+import dev.hieunv.bankos.enums.OutboxEventStatus;
+import dev.hieunv.bankos.enums.PaymentStatus;
 import dev.hieunv.bankos.exception.PaymentBusinessException;
 import dev.hieunv.bankos.model.Account;
 import dev.hieunv.bankos.model.IdempotencyKey;
@@ -119,7 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .accountId(accountId)
                 .amount(amount)
                 .idempotencyKey(key)
-                .status("PENDING")
+                .status(PaymentStatus.PENDING)
                 .build();
         paymentRepository.save(payment);
         System.out.println("[Payment] Inserted PENDING $" + amount
@@ -139,7 +142,7 @@ public class PaymentServiceImpl implements PaymentService {
         simulateExternalGateway(request);
 
         return PaymentGatewayResponse.builder()
-                .status("SUCCESS")
+                .status(GatewayStatus.SUCCESS)
                 .gatewayRef("GW-" + System.currentTimeMillis())
                 .message("Payment processed")
                 .build();
@@ -160,7 +163,7 @@ public class PaymentServiceImpl implements PaymentService {
                 request.getAccountId(), reason);
 
         return PaymentGatewayResponse.builder()
-                .status("FAILED")
+                .status(GatewayStatus.FAILED)
                 .message(reason)
                 .build();
     }
@@ -231,7 +234,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .aggregateId(payment.getId())
                     .eventType("PAYMENT_PROCESSED")
                     .payload(payload)
-                    .status("PENDING")
+                    .status(OutboxEventStatus.PENDING)
                     .createdAt(LocalDateTime.now())
                     .retryCount(0)
                     .build();

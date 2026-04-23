@@ -1,0 +1,5 @@
+package dev.hieunv.bankos.enums;
+
+public enum OrderStatus {
+    CREATED, STOCK_RESERVED, PAYMENT_COMPLETED, PAYMENT_FAILED, COMPLETED, COMPENSATED, FAILED, PENDING
+}

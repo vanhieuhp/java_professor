@@ -1,6 +1,8 @@
 package dev.hieunv.bankos.service.impl;
 
 import dev.hieunv.bankos.dto.order.OrderRequest;
+import dev.hieunv.bankos.enums.OrderStatus;
+import dev.hieunv.bankos.enums.ProductStatus;
 import dev.hieunv.bankos.model.Order;
 import dev.hieunv.bankos.repository.OrderRepository;
 import dev.hieunv.bankos.repository.ProductRepository;
@@ -24,7 +26,8 @@ public class SagaStepServiceImpl implements SagaStepService {
     @Override
     public int reserveStock(String sagaId, OrderRequest request) {
         return productRepository.claimSemanticLock(
-                request.getProductId(), sagaId, request.getQuantity());
+                request.getProductId(), sagaId, request.getQuantity(),
+                ProductStatus.PENDING, ProductStatus.AVAILABLE);
     }
 
     @Transactional
@@ -33,7 +36,7 @@ public class SagaStepServiceImpl implements SagaStepService {
         return orderRepository.save(Order.builder()
                 .userId(request.getUserId())
                 .productId(request.getProductId())
-                .status("STOCK_RESERVED")
+                .status(OrderStatus.STOCK_RESERVED)
                 .sagaId(sagaId)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -44,8 +47,8 @@ public class SagaStepServiceImpl implements SagaStepService {
     @Override
     public void confirmSale(String sagaId, Order order, OrderRequest request) {
         productRepository.confirmSale(
-                request.getProductId(), sagaId, request.getQuantity());
-        order.setStatus("COMPLETED");
+                request.getProductId(), sagaId, request.getQuantity(), ProductStatus.SOLD);
+        order.setStatus(OrderStatus.COMPLETED);
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
     }
@@ -53,8 +56,8 @@ public class SagaStepServiceImpl implements SagaStepService {
     @Transactional
     @Override
     public void compensate(String sagaId, Order order) {
-        productRepository.releaseSemanticLock(order.getProductId(), sagaId);
-        order.setStatus("COMPENSATED");
+        productRepository.releaseSemanticLock(order.getProductId(), sagaId, ProductStatus.AVAILABLE);
+        order.setStatus(OrderStatus.COMPENSATED);
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
         log.info("[Saga:{}] Compensated — semantic lock released", sagaId);

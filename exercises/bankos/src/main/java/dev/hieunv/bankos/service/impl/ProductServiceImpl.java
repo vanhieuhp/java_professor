@@ -4,6 +4,7 @@ import dev.hieunv.bankos.client.ExternalWarehouseClient;
 import dev.hieunv.bankos.dto.product.ProductDTO;
 import dev.hieunv.bankos.dto.product.ProductSearchDTO;
 import dev.hieunv.bankos.dto.product.ProductSpecification;
+import dev.hieunv.bankos.enums.ProductStatus;
 import dev.hieunv.bankos.model.Product;
 import dev.hieunv.bankos.repository.ProductRepository;
 import dev.hieunv.bankos.service.ProductService;
@@ -87,7 +88,7 @@ public class ProductServiceImpl implements ProductService {
         warehouseClient.reserveStock(product.getId(), dto.getStock());
 
         // Step 3 — update status
-        product.setStatus("RESERVED");
+        product.setStatus(ProductStatus.RESERVED);
 
         return toDTO(product);
     }
@@ -101,7 +102,7 @@ public class ProductServiceImpl implements ProductService {
         warehouseClient.reserveStock(productId, dto.getStock());
 
         // Step 3 — update status in new short transaction
-        return updateStatusInTx(productId, "RESERVED");
+        return updateStatusInTx(productId, ProductStatus.RESERVED);
     }
 
     @Transactional
@@ -113,7 +114,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional
-    public ProductDTO updateStatusInTx(Long productId, String status) {
+    public ProductDTO updateStatusInTx(Long productId, ProductStatus status) {
         Product product = productRepository.findById(productId).orElseThrow();
         product.setStatus(status);
         return toDTO(product);

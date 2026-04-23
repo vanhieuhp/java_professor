@@ -1,6 +1,8 @@
 package dev.hieunv.bankos.service.consumer;
 
 import dev.hieunv.bankos.dto.order.OrderCreatedEvent;
+import dev.hieunv.bankos.dto.payment.PaymentCompletedEvent;
+import dev.hieunv.bankos.dto.payment.PaymentFailedEvent;
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +13,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class PaymentSagaConsumer {
     )
     public void consume(ConsumerRecord<String, Object> record) {
         OrderCreatedEvent event = (OrderCreatedEvent) record.value();
-        log.info("[Saga:{}] Processing payment amount={}",
+        log.info("[ORDER_CREATED][Saga:{}] Processing payment amount={}",
                 event.getSagaId(), event.getAmount());
 
         try {
@@ -39,28 +40,30 @@ public class PaymentSagaConsumer {
                     event.getUserId(), event.getAmount()
             );
 
+            PaymentCompletedEvent paymentCompletedEvent = PaymentCompletedEvent.builder()
+                    .sagaId(event.getSagaId())
+                    .orderId(event.getOrderId())
+                    .productId(event.getProductId())
+                    .quantity(event.getQuantity())
+                    .paymentId(payment.getId())
+                    .amount(event.getAmount())
+                    .occurredAt(LocalDateTime.now())
+                    .build();
             // publish success
-            kafkaTemplate.send(PAYMENT_COMPLETED_TOPIC, event.getSagaId(),
-                    Map.of(
-                            "sagaId",     event.getSagaId(),
-                            "orderId",    event.getOrderId(),
-                            "productId",  event.getProductId(),
-                            "quantity",   event.getQuantity(),
-                            "paymentId",  payment.getId(),
-                            "occurredAt", LocalDateTime.now().toString()
-                    ));
-            log.info("[Saga:{}] Published PAYMENT_COMPLETED event to Kafka", event.getSagaId());
+            kafkaTemplate.send(PAYMENT_COMPLETED_TOPIC, event.getSagaId(), paymentCompletedEvent);
+            log.info("[ORDER_CREATED][Saga:{}] Published PAYMENT_COMPLETED event to Kafka", event.getSagaId());
         } catch (Exception e) {
-            kafkaTemplate.send(PAYMENT_FAILED_TOPIC, event.getSagaId(),
-                    Map.of(
-                            "sagaId",    event.getSagaId(),
-                            "orderId",   event.getOrderId(),
-                            "productId", event.getProductId(),
-                            "reason",    e.getMessage(),
-                            "occurredAt", LocalDateTime.now().toString()
-                    ));
+            PaymentFailedEvent paymentFailedEvent = PaymentFailedEvent.builder()
+                    .sagaId(event.getSagaId())
+                    .orderId(event.getOrderId())
+                    .productId(event.getProductId())
+                    .reason(e.getMessage())
+                    .occurredAt(LocalDateTime.now())
+                    .build();
 
-            log.warn("[Saga:{}] Payment failed → published PAYMENT_FAILED reason={}",
+            kafkaTemplate.send(PAYMENT_FAILED_TOPIC, event.getSagaId(), paymentFailedEvent);
+
+            log.warn("[ORDER_CREATED][Saga:{}] Payment failed → published PAYMENT_FAILED reason={}",
                     event.getSagaId(), e.getMessage());
         }
     }

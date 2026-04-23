@@ -1,7 +1,10 @@
 package dev.hieunv.bankos.model;
 
+import dev.hieunv.bankos.enums.PaymentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,8 +35,9 @@ public class Payment {
     @Column(name = "amount")
     private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private PaymentStatus status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

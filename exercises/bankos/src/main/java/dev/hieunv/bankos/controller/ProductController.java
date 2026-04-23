@@ -2,6 +2,7 @@ package dev.hieunv.bankos.controller;
 
 import dev.hieunv.bankos.dto.product.ProductDTO;
 import dev.hieunv.bankos.dto.product.ProductSearchDTO;
+import dev.hieunv.bankos.enums.ProductStatus;
 import dev.hieunv.bankos.service.FlashSaleService;
 import dev.hieunv.bankos.service.FlushModeProductService;
 import dev.hieunv.bankos.service.ProductService;
@@ -66,7 +67,7 @@ public class ProductController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) ProductStatus status,
             @RequestParam(required = false) Integer minStock,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {

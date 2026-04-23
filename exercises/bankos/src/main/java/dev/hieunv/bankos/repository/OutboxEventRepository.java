@@ -11,7 +11,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long> 
     // relay polls this — only PENDING events, oldest first, batch of 10
     @Query("""
             SELECT e FROM OutboxEvent e
-            WHERE e.status = 'PENDING'
+            WHERE e.status = dev.hieunv.bankos.enums.OutboxEventStatus.PENDING
             ORDER BY e.createdAt ASC
             LIMIT 10
             """)

@@ -3,6 +3,7 @@ package dev.hieunv.bankos.service.outbox;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
+import dev.hieunv.bankos.enums.OutboxEventStatus;
 import dev.hieunv.bankos.model.OutboxEvent;
 import dev.hieunv.bankos.repository.OutboxEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class OutboxEventProcessor {
     public void processEvent(OutboxEvent event) {
         try {
             publishToKafka(event);
-            event.setStatus("PUBLISHED");
+            event.setStatus(OutboxEventStatus.PUBLISHED);
             event.setPublishedAt(LocalDateTime.now());
             outboxEventRepository.save(event);
             log.info("[Relay] Published eventId={} type={} aggregateId={}",
@@ -38,7 +39,7 @@ public class OutboxEventProcessor {
         } catch (Exception e) {
             event.setRetryCount(event.getRetryCount() + 1);
             if (event.getRetryCount() >= 3) {
-                event.setStatus("FAILED");
+                event.setStatus(OutboxEventStatus.FAILED);
                 log.error("[Relay] Event ID={} failed after 3 retries — marked FAILED",
                         event.getId());
             } else {

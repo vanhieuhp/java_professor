@@ -1,7 +1,10 @@
 package dev.hieunv.bankos.model;
 
+import dev.hieunv.bankos.enums.OutboxEventStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -37,7 +40,8 @@ public class OutboxEvent {
     private String payload;
 
     // relay tracks this
-    private String status;          // PENDING → PUBLISHED → FAILED
+    @Enumerated(EnumType.STRING)
+    private OutboxEventStatus status;   // PENDING → PUBLISHED → FAILED
 
     private LocalDateTime createdAt;
     private LocalDateTime publishedAt;

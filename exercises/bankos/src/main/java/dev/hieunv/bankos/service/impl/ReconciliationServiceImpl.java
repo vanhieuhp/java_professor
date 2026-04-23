@@ -1,5 +1,6 @@
 package dev.hieunv.bankos.service.impl;
 
+import dev.hieunv.bankos.enums.PaymentStatus;
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.repository.AccountRepository;
 import dev.hieunv.bankos.repository.PaymentRepository;
@@ -114,7 +115,7 @@ public class ReconciliationServiceImpl implements ReconciliationService {
     // Shared helper — sums all PENDING payments for given accounts
     @Override
     public BigDecimal calculatePendingTotal(List<Long> accountIds) {
-        return paymentRepository.findByAccountIdInAndStatus(accountIds, "PENDING")
+        return paymentRepository.findByAccountIdInAndStatus(accountIds, PaymentStatus.PENDING)
                 .stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
