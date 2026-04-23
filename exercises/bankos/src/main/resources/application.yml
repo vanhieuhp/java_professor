@@ -80,6 +80,15 @@ spring:
       ack-mode: RECORD # acknowledge each record after processing
     admin:
       auto-create: true
+    streams:
+      application-id: bankos-streams
+      bootstrap-servers: ${spring.kafka.bootstrap-servers}
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.springframework.kafka.support.serializer.JsonSerializer
+        spring.json.trusted.packages: "dev.hieunv.bankos.*"
+        default.deserialization.exception.handler: org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
+      auto-startup: true
 
 bankos:
   cache:
