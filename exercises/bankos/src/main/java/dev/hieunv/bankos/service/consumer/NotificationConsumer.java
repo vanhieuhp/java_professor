@@ -16,6 +16,11 @@ public class NotificationConsumer {
     )
     public void consume(ConsumerRecord<String, Object> record) {
         PaymentProcessedEvent event = (PaymentProcessedEvent) record.value();
+//        try {
+//            Thread.sleep(3000); // simulate slow email service
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
         log.info("[Notification] Sending email for paymentId={} accountId={} amount={}",
                 event.getPaymentId(), event.getAccountId(), event.getAmount());
         // TODO: send email

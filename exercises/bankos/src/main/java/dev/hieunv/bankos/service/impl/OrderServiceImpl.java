@@ -7,8 +7,8 @@ import dev.hieunv.bankos.enums.OrderStatus;
 import dev.hieunv.bankos.model.Order;
 import dev.hieunv.bankos.service.OrderService;
 import dev.hieunv.bankos.service.SagaStepService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 
@@ -24,6 +23,13 @@ public class OrderServiceImpl implements OrderService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String ORDER_CREATED_TOPIC = "order-created";
+
+    public OrderServiceImpl(SagaStepService sagaStepService,
+                            @Qualifier("paymentKafkaTemplate")
+                            KafkaTemplate<String, Object> kafkaTemplate) {
+        this.sagaStepService = sagaStepService;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     @Override
     public OrderResponse placeOrder(OrderRequest request) {

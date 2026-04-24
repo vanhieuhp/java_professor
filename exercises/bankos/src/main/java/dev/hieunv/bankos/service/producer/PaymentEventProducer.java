@@ -1,18 +1,25 @@
 package dev.hieunv.bankos.service.producer;
 
 import dev.hieunv.bankos.dto.payment.PaymentProcessedEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class PaymentEventProducer {
     private static final String TOPIC = "payment-events";
+
+    @Qualifier("paymentKafkaTemplate")
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public PaymentEventProducer(
+            @Qualifier("paymentKafkaTemplate")
+            KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public void sendPaymentEvent(PaymentProcessedEvent event) {
         String key = event.getAccountId().toString();

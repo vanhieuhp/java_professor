@@ -1,19 +1,26 @@
 package dev.hieunv.bankos.service.producer;
 
 import dev.hieunv.bankos.dto.wallet.WalletStatusEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class WalletStatusProducer {
 
     private static final String TOPIC = "wallet-status";
+
+    @Qualifier("backgroundKafkaTemplate")
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public WalletStatusProducer(
+            @Qualifier("backgroundKafkaTemplate")
+            KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public void sendWalletStatus(WalletStatusEvent event) {
         String key = event.getAccountId().toString();

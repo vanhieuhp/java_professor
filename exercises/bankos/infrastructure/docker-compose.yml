@@ -10,16 +10,22 @@ services:
       - KAFKA_NODE_ID=1
       - KAFKA_PROCESS_ROLES=broker,controller
       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      # PLAINTEXT: external (host), INTERNAL: container-to-container, CONTROLLER: KRaft metadata
-      - KAFKA_LISTENERS=PLAINTEXT://:9092,INTERNAL://:29092,CONTROLLER://:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      # PLAINTEXT for external (with SASL), INTERNAL for container-to-container, CONTROLLER for KRaft
+      - KAFKA_LISTENERS=SASL_PLAINTEXT://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=SASL_PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=SASL_PLAINTEXT:SASL_PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1      # ← add this
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0      # ← add this
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_NUM_PARTITIONS=3
+      # SASL settings
+      - KAFKA_SASL_ENABLED_MECHANISMS=PLAIN
+      - KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL=PLAIN
+      - KAFKA_OPTS=-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
+    volumes:
+      - ./kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -28,7 +34,6 @@ services:
       - "8090:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      # Use internal listener so kafka-ui reaches Kafka container-to-container
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
     depends_on:
       - kafka

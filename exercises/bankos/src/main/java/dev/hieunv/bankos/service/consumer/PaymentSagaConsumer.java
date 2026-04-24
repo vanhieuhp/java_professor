@@ -5,9 +5,9 @@ import dev.hieunv.bankos.dto.payment.PaymentCompletedEvent;
 import dev.hieunv.bankos.dto.payment.PaymentFailedEvent;
 import dev.hieunv.bankos.model.Payment;
 import dev.hieunv.bankos.service.PaymentService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -15,15 +15,23 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class PaymentSagaConsumer {
 
     private final PaymentService paymentService;
+
+    @Qualifier("paymentKafkaTemplate")
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String PAYMENT_COMPLETED_TOPIC = "payment-completed";
     private static final String PAYMENT_FAILED_TOPIC    = "payment-failed";
+
+    public PaymentSagaConsumer(PaymentService paymentService,
+                               @Qualifier("paymentKafkaTemplate")
+                               KafkaTemplate<String, Object> kafkaTemplate) {
+        this.paymentService = paymentService;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     @KafkaListener(
             topics = "order-created",

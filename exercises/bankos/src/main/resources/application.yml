@@ -76,6 +76,10 @@ spring:
           paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
           paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent,
           walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent
+        max.poll.interval.ms: 30000
+        fetch.min.bytes: 1
+        fetch.max.wait.ms: 500
+      max-poll-records: 100
     listener:
       ack-mode: RECORD # acknowledge each record after processing
     admin:
@@ -88,7 +92,21 @@ spring:
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerializer
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
         default.deserialization.exception.handler: org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
+        properties:
+          security.protocol: SASL_PLAINTEXT
+          sasl.mechanism: PLAIN
+          sasl.jaas.config: >
+            org.apache.kafka.common.security.plain.PlainLoginModule required
+            username="payment-svc"
+            password="payment-secret";
       auto-startup: true
+    properties:
+      security.protocal: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+      sasl.jass.config: >
+        org.apache.kafka.common.security.plain.PlainLoginModule required 
+        username="payment-svc" 
+        password="payment-secret";
 
 bankos:
   cache:
