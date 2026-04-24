@@ -69,6 +69,11 @@ public class KafkaConfig {
                         "paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent," +
                         "paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent," +
                         "walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent");
+        props.put("security.protocol", "SASL_PLAINTEXT");
+        props.put("sasl.mechanism", "PLAIN");
+        props.put("sasl.jaas.config",
+                "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                        "username=\"payment-svc\" password=\"payment-secret\";");
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -97,6 +102,11 @@ public class KafkaConfig {
                         "paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent," +
                         "paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent," +
                         "walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent");
+        props.put("security.protocol", "SASL_PLAINTEXT");
+        props.put("sasl.mechanism", "PLAIN");
+        props.put("sasl.jaas.config",
+                "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                        "username=\"payment-svc\" password=\"payment-secret\";");
         return new DefaultKafkaProducerFactory<>(props);
     }
 

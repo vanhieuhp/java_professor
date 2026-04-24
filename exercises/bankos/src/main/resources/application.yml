@@ -51,6 +51,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
+        schema.registry.url: http://localhost:8081
         spring.json.add.type.headers: true
         spring.json.type.mapping: >
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
@@ -69,6 +70,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       enable-auto-commit: false
       properties:
+        schema.registry.url: http://localhost:8081
+        specific.avro.reader: true
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
         spring.json.type.mapping: >
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
@@ -92,20 +95,19 @@ spring:
         default.value.serde: org.springframework.kafka.support.serializer.JsonSerializer
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
         default.deserialization.exception.handler: org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
-        properties:
-          security.protocol: SASL_PLAINTEXT
-          sasl.mechanism: PLAIN
-          sasl.jaas.config: >
-            org.apache.kafka.common.security.plain.PlainLoginModule required
-            username="payment-svc"
-            password="payment-secret";
+        security.protocol: SASL_PLAINTEXT
+        sasl.mechanism: PLAIN
+        sasl.jaas.config: >
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username="payment-svc"
+          password="payment-secret";
       auto-startup: true
     properties:
-      security.protocal: SASL_PLAINTEXT
+      security.protocol: SASL_PLAINTEXT   # ← protocol
       sasl.mechanism: PLAIN
-      sasl.jass.config: >
-        org.apache.kafka.common.security.plain.PlainLoginModule required 
-        username="payment-svc" 
+      sasl.jaas.config: >                 # ← jaas
+        org.apache.kafka.common.security.plain.PlainLoginModule required
+        username="payment-svc"
         password="payment-secret";
 
 bankos:
