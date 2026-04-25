@@ -1,0 +1,67 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.15-SNAPSHOT'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'dev.hieunv'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven { url = 'https://repo.spring.io/snapshot' }
+}
+
+dependencies {
+	// ── SPRING BOOT CORE ──────────────────────────────────────
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// ── DATABASE ──────────────────────────────────────────────
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly    'org.postgresql:postgresql'
+
+	// ── FLYWAY ───────────────────────────────────────────────
+	// manages DB schema versioning via SQL migration files
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+
+	// ── REDIS ─────────────────────────────────────────────────
+	// token blacklist + permission cache
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// ── SECURITY + JWT ────────────────────────────────────────
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	runtimeOnly    'io.jsonwebtoken:jjwt-impl:0.12.5'
+	runtimeOnly    'io.jsonwebtoken:jjwt-jackson:0.12.5'
+
+	// ── MAPSTRUCT ─────────────────────────────────────────────
+	// compile-time entity ↔ DTO mapping, works with Lombok
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+	// Lombok + MapStruct together need this binding
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+	// ── TEST ──────────────────────────────────────────────────
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+}
+
+// ── Ensure MapStruct processor runs after Lombok
+compileJava {
+	options.compilerArgs += [
+			'-Amapstruct.defaultComponentModel=spring'
+	]
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
