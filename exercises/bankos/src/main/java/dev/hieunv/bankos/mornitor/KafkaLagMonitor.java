@@ -1,9 +1,12 @@
 package dev.hieunv.bankos.mornitor;
 
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -29,10 +32,26 @@ public class KafkaLagMonitor {
             "bankos-fraud-group", 500L
     );
 
+    private AdminClient adminClient;
+
+    @PostConstruct
+    public void init() {
+        Map<String, Object> props = kafkaAdmin.getConfigurationProperties();
+        log.info("[AdminClient] Connecting to: {}",
+                props.get(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG));
+        adminClient = AdminClient.create(props);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (adminClient != null) {
+            adminClient.close();
+        }
+    }
+
     @Scheduled(fixedDelay = 3000)
     public void checkConsumerLag() {
         try {
-            AdminClient adminClient = AdminClient.create(kafkaAdmin.getConfigurationProperties());
             for (String groupId : LAG_ALERT_THRESHOLDS.keySet()) {
                 try {
                     Map<TopicPartition, OffsetAndMetadata> offsets = adminClient

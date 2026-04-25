@@ -1,4 +1,9 @@
 spring:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
+  kafka:
+    bootstrap-servers: 163.223.8.60:9092
+    producer:
+      properties:
+        schema.registry.url: http://163.223.8.60:8081
+    consumer:
+      properties:
+        schema.registry.url: http://163.223.8.60:8081

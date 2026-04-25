@@ -2,9 +2,9 @@ spring:
   application:
     name: bankos
   datasource:
-    url: jdbc:postgresql://localhost:5432/bankos
-    username: admin
-    password: password
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/bankos}
+    username: ${POSTGRES_USER:admin}
+    password: ${POSTGRES_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -46,12 +46,12 @@ spring:
     caffeine:
       spec: maximumSize=500,expireAfterWrite=5s # local cache TTL
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        schema.registry.url: http://localhost:8081
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
         spring.json.add.type.headers: true
         spring.json.type.mapping: >
           paymentProcessed:dev.hieunv.bankos.dto.payment.PaymentProcessedEvent,
@@ -70,7 +70,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       enable-auto-commit: false
       properties:
-        schema.registry.url: http://localhost:8081
+        schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL:http://localhost:8081}
         specific.avro.reader: true
         spring.json.trusted.packages: "dev.hieunv.bankos.*"
         spring.json.type.mapping: >
