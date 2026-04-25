@@ -1,4 +1,11 @@
 spring:
+  application:
+    name: bankos
+  datasource:
+    url: jdbc:postgresql://163.223.8.60:5432/bankos
+    username: bankos_user
+    password: +O3iXlw+QLqqvrhAlSTeaA3SD66o0udx/dbnZfOYPWM=
+    driver-class-name: org.postgresql.Driver
   kafka:
     bootstrap-servers: 163.223.8.60:9092
     producer:
@@ -7,3 +14,8 @@ spring:
     consumer:
       properties:
         schema.registry.url: http://163.223.8.60:8081
+  data:
+    redis:
+      host: 163.223.8.60
+      port: 6379
+      password: "R3d!s#B@nk0s2026$"

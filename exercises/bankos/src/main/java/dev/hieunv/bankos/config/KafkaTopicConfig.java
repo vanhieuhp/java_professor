@@ -17,4 +17,22 @@ public class KafkaTopicConfig {
                         TopicConfig.CLEANUP_POLICY_COMPACT)
                 .build();
     }
+
+    @Bean
+    public NewTopic userRegisteredTopic() {
+        return TopicBuilder.name("user.registered")
+                .partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic paymentCompletedNotificationTopic() {
+        return TopicBuilder.name("payment.completed")
+                .partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic walletLockedTopic() {
+        return TopicBuilder.name("wallet.locked")
+                .partitions(3).replicas(1).build();
+    }
 }

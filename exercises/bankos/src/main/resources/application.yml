@@ -78,15 +78,17 @@ spring:
           orderCreated:dev.hieunv.bankos.dto.order.OrderCreatedEvent,
           paymentCompleted:dev.hieunv.bankos.dto.payment.PaymentCompletedEvent,
           paymentFailed:dev.hieunv.bankos.dto.payment.PaymentFailedEvent,
-          walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent
+          walletStatus:dev.hieunv.bankos.dto.wallet.WalletStatusEvent,
+          userRegistered:dev.hieunv.bankos.dto.notification.UserRegisteredEvent,
+          walletLocked:dev.hieunv.bankos.dto.notification.WalletLockedEvent
         max.poll.interval.ms: 30000
         fetch.min.bytes: 1
         fetch.max.wait.ms: 500
       max-poll-records: 100
     listener:
       ack-mode: RECORD # acknowledge each record after processing
-    admin:
-      auto-create: true
+#    admin:
+#      auto-create: true
     streams:
       application-id: bankos-streams
       bootstrap-servers: ${spring.kafka.bootstrap-servers}

@@ -10,10 +10,11 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -23,7 +24,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class KafkaLagMonitor {
 
-    private final KafkaAdmin kafkaAdmin;
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     private static final Map<String, Long> LAG_ALERT_THRESHOLDS = Map.of(
             "bankos-payment-group", 1000L,
@@ -36,9 +38,15 @@ public class KafkaLagMonitor {
 
     @PostConstruct
     public void init() {
-        Map<String, Object> props = kafkaAdmin.getConfigurationProperties();
-        log.info("[AdminClient] Connecting to: {}",
-                props.get(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG));
+        Map<String, Object> props = new HashMap<>();
+        props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put("security.protocol", "SASL_PLAINTEXT");
+        props.put("sasl.mechanism", "PLAIN");
+        props.put("sasl.jaas.config",
+                "org.apache.kafka.common.security.plain.PlainLoginModule required " +
+                        "username=\"payment-svc\" password=\"payment-secret\";");
+
+        log.info("[AdminClient] Connecting to: {}", bootstrapServers);
         adminClient = AdminClient.create(props);
     }
 
@@ -49,7 +57,7 @@ public class KafkaLagMonitor {
         }
     }
 
-    @Scheduled(fixedDelay = 3000)
+    @Scheduled(fixedDelay = 30000)
     public void checkConsumerLag() {
         try {
             for (String groupId : LAG_ALERT_THRESHOLDS.keySet()) {
