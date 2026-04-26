@@ -19,6 +19,7 @@
 10. [Audit Logging](#10-audit-logging)
 11. [Edge Cases and Rules](#11-edge-cases-and-rules)
 12. [Mental Model: The Big Picture](#12-mental-model-the-big-picture)
+13. [Testing Transfers — curl Playbook](#13-testing-transfers--curl-playbook)
 
 ---
 
@@ -1011,3 +1012,248 @@ The cost is paid once at wallet activation.
 | `db/migration/V7__create_features_functions.sql` | Seeds features and functions |
 | `db/migration/V8__create_permissions.sql` | CROSS JOIN to create 25 permissions |
 | `db/migration/V12__seed_data.sql` | Seeds default groups with realistic permission sets |
+
+---
+
+## 13. Testing Transfers — curl Playbook
+
+> The wallet starts with `balance = 0`. You must fund it via **cashin** before any transfer can be
+> created (`createRequest` rejects `amount > balance` immediately).  
+> The seeded `admin` user is in **Full Operator** group → holds all 25 permissions → can self-approve.
+
+---
+
+### Scenario A — Admin Self-Approves (Quick)
+
+#### Step 1 — Login
+
+```bash
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin@123"}'
+```
+
+Copy `accessToken` → **PRE_WALLET_TOKEN**.
+
+#### Step 2 — Activate Wallet
+
+```bash
+curl -s -X POST http://localhost:8080/api/auth/activate-wallet \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <PRE_WALLET_TOKEN>" \
+  -d '{"walletId":1}'
+```
+
+Copy the new `accessToken` → **WALLET_TOKEN**. The `permissions` array in the response shows
+everything this token can do. Use **WALLET_TOKEN** for every call below.
+
+#### Step 3 — Fund the Wallet (Cashin)
+
+**3a. Create cashin request:**
+```bash
+curl -s -X POST http://localhost:8080/api/cashin \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{
+    "amount": 10000000,
+    "currency": "VND",
+    "fromAccount": "BANK-ACC-001",
+    "description": "Initial deposit"
+  }'
+```
+
+Note the `id` from the response (e.g. `1`).
+
+**3b. Approve the cashin** — credits wallet balance by 10,000,000:
+```bash
+curl -s -X POST http://localhost:8080/api/cashin/1/approve \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"note":"Verified bank receipt"}'
+```
+
+Response shows `status: "APPROVED"`. Wallet balance is now `10000000`.
+
+#### Step 4 — Create Transfer Request
+
+```bash
+curl -s -X POST http://localhost:8080/api/transfers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{
+    "amount": 500000,
+    "currency": "VND",
+    "toAccount": "DEST-ACC-002",
+    "description": "Payment for invoice #42"
+  }'
+```
+
+Note the `id` from the response (e.g. `1`). Status is `"PENDING"`.
+
+#### Step 5 — List Pending Transfers
+
+Admin has `TRANSFER:APPROVE` → list returns the **checker view** (only `PENDING` requests):
+
+```bash
+curl -s "http://localhost:8080/api/transfers?page=0&size=20" \
+  -H "Authorization: Bearer <WALLET_TOKEN>"
+```
+
+#### Step 6 — Get Transfer Detail
+
+```bash
+curl -s http://localhost:8080/api/transfers/1 \
+  -H "Authorization: Bearer <WALLET_TOKEN>"
+```
+
+#### Step 7 — Approve Transfer
+
+Debits wallet balance by `500000` in the same DB transaction:
+
+```bash
+curl -s -X POST http://localhost:8080/api/transfers/1/approve \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"note":"Verified and approved"}'
+```
+
+Response: `status: "APPROVED"`. Wallet balance is now `9500000`.
+
+#### Step 7 (alt) — Reject Transfer
+
+```bash
+curl -s -X POST http://localhost:8080/api/transfers/1/reject \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"note":"Destination account invalid"}'
+```
+
+> **Note:** rejection `note` is **required** — empty body returns 400.
+
+---
+
+### Scenario B — Maker-Checker (Two Users)
+
+Real separation: maker creates, checker approves. Maker cannot approve their own request.
+
+#### Setup (run as admin with WALLET_TOKEN from above)
+
+```bash
+# 1. Create maker user
+curl -s -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"username":"maker1","email":"maker1@co.com","password":"Maker@123","fullName":"Maker One"}'
+
+# 2. Create checker user
+curl -s -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"username":"checker1","email":"checker1@co.com","password":"Checker@123","fullName":"Checker One"}'
+
+# 3. Activate both users (use IDs from responses above, e.g. 2 and 3)
+curl -s -X PATCH http://localhost:8080/api/users/2/activate -H "Authorization: Bearer <WALLET_TOKEN>"
+curl -s -X PATCH http://localhost:8080/api/users/3/activate -H "Authorization: Bearer <WALLET_TOKEN>"
+
+# 4. Assign both to wallet 1
+curl -s -X POST http://localhost:8080/api/wallets/assign-user \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"walletId":1,"userId":2}'
+
+curl -s -X POST http://localhost:8080/api/wallets/assign-user \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"walletId":1,"userId":3}'
+
+# 5. Check group IDs (Maker and Checker were seeded in V12)
+curl -s http://localhost:8080/api/groups/wallet/1 -H "Authorization: Bearer <WALLET_TOKEN>"
+```
+
+Assign maker1 → Maker group, checker1 → Checker group (use IDs from the groups response above):
+
+```bash
+curl -s -X POST http://localhost:8080/api/groups/assign-user \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"walletId":1,"userId":2,"groupId":<MAKER_GROUP_ID>}'
+
+curl -s -X POST http://localhost:8080/api/groups/assign-user \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <WALLET_TOKEN>" \
+  -d '{"walletId":1,"userId":3,"groupId":<CHECKER_GROUP_ID>}'
+```
+
+#### Maker Creates a Transfer
+
+```bash
+# Login as maker1
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"maker1","password":"Maker@123"}'
+
+# Activate wallet
+curl -s -X POST http://localhost:8080/api/auth/activate-wallet \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MAKER_PRE_TOKEN>" \
+  -d '{"walletId":1}'
+
+# Create transfer (maker has TRANSFER:CREATE_REQUEST)
+curl -s -X POST http://localhost:8080/api/transfers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MAKER_WALLET_TOKEN>" \
+  -d '{"amount":200000,"currency":"VND","toAccount":"DEST-ACC-003","description":"Supplier payment"}'
+```
+
+**Try to self-approve → must get 403:**
+```bash
+curl -s -X POST http://localhost:8080/api/transfers/2/approve \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <MAKER_WALLET_TOKEN>" \
+  -d '{"note":"self approve"}'
+# → {"success":false,"error":"Access denied: missing permission TRANSFER:APPROVE"}
+```
+
+#### Checker Approves
+
+```bash
+# Login as checker1
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"checker1","password":"Checker@123"}'
+
+# Activate wallet
+curl -s -X POST http://localhost:8080/api/auth/activate-wallet \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <CHECKER_PRE_TOKEN>" \
+  -d '{"walletId":1}'
+
+# List — checker sees only PENDING (their work queue)
+curl -s "http://localhost:8080/api/transfers" \
+  -H "Authorization: Bearer <CHECKER_WALLET_TOKEN>"
+
+# Approve
+curl -s -X POST http://localhost:8080/api/transfers/2/approve \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <CHECKER_WALLET_TOKEN>" \
+  -d '{"note":"Approved after verification"}'
+```
+
+---
+
+### Permission Map
+
+| Action | Required Permission | Viewer | Maker | Checker | Full Operator |
+|---|---|:---:|:---:|:---:|:---:|
+| List transfers | `TRANSFER:LIST` | ✓ | ✓ | ✓ | ✓ |
+| View detail | `TRANSFER:READ_DETAIL` | ✓ | ✓ | ✓ | ✓ |
+| Create request | `TRANSFER:CREATE_REQUEST` | | ✓ | | ✓ |
+| Approve / Reject | `TRANSFER:APPROVE` | | | ✓ | ✓ |
+| Export Excel | `TRANSFER:EXPORT_EXCEL` | | | | ✓ |
+
+### What the List Endpoint Returns Per Role
+
+| Role | Has `TRANSFER:APPROVE`? | `GET /api/transfers` shows |
+|---|---|---|
+| Viewer / Maker | No | Only **their own** requests (all statuses) |
+| Checker / Full Operator | Yes | Only **PENDING** requests across all users (work queue) |
