@@ -23,7 +23,7 @@ public interface GroupPermissionRepository extends JpaRepository<GroupPermission
     @Query("DELETE FROM GroupPermission gp WHERE gp.groupId = :groupId")
     void deleteAllByGroupId(@Param("groupId") Long groupId);
 
-    // THE KEY QUERY — resolve all permission codes for a user in a wallet
+    // resolve all permission codes for a user in a specific wallet (used at wallet activation)
     @Query("""
         SELECT p.code
         FROM GroupPermission gp
@@ -37,4 +37,15 @@ public interface GroupPermissionRepository extends JpaRepository<GroupPermission
             @Param("userId")   Long userId,
             @Param("walletId") Long walletId
     );
+
+    // resolve all permission codes for a user across ALL wallets (used at login)
+    @Query("""
+        SELECT DISTINCT p.code
+        FROM GroupPermission gp
+        JOIN Permission p        ON p.id  = gp.permissionId
+        JOIN WalletUserGroup wug ON wug.groupId = gp.groupId
+        WHERE wug.userId   = :userId
+          AND wug.isActive = true
+        """)
+    List<String> findPermissionCodesByUserId(@Param("userId") Long userId);
 }

@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface JwtService {
 
-    // issued right after login — no wallet scope yet
-    String generatePreWalletToken(User user);
+    // issued right after login — carries user-level permissions (e.g. ADMIN:*)
+    String generatePreWalletToken(User user, List<String> userPermissions);
 
     // issued after wallet activation — carries permissions[]
     String generateWalletToken(Long userId, Long walletId,
@@ -21,4 +21,15 @@ public interface JwtService {
 
     // check token has not expired and is not blacklisted
     boolean isTokenValid(String token);
+
+    Long extractUserId(String token);
+
+    Long extractWalletId(String token);
+
+    @SuppressWarnings("unchecked")
+    List<String> extractPermissions(String token);
+
+    String extractType(String token);
+
+    boolean isWalletToken(String token);
 }

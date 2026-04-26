@@ -14,6 +14,7 @@ import dev.hieunv.totp_bankos.mapper.AccountWalletMapper;
 import dev.hieunv.totp_bankos.repository.AccountWalletRepository;
 import dev.hieunv.totp_bankos.repository.ActiveWalletSessionRepository;
 import dev.hieunv.totp_bankos.repository.GroupPermissionRepository;
+import dev.hieunv.totp_bankos.repository.UserPermissionRepository;
 import dev.hieunv.totp_bankos.repository.UserRepository;
 import dev.hieunv.totp_bankos.repository.WalletUserRepository;
 import dev.hieunv.totp_bankos.service.AuthService;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +41,7 @@ public class AuthServiceImpl  implements AuthService {
     private final AccountWalletRepository accountWalletRepository;
     private final ActiveWalletSessionRepository sessionRepository;
     private final GroupPermissionRepository groupPermissionRepository;
+    private final UserPermissionRepository userPermissionRepository;
     private final AccountWalletMapper walletMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -69,8 +72,9 @@ public class AuthServiceImpl  implements AuthService {
         List<AccountWallet> wallets = accountWalletRepository.findAllById(walletIds);
         List<WalletSummaryResponse> walletSummaries = walletMapper.toSummaryResponseList(wallets);
 
-        // 5. issue a pre-wallet access token (no wallet scope yet)
-        String accessToken = jwtService.generatePreWalletToken(user);
+        // 5. load user-level permissions (e.g. ADMIN:*) and embed in pre-wallet token
+        List<String> userPermissions = userPermissionRepository.findPermissionCodesByUserId(user.getId());
+        String accessToken = jwtService.generatePreWalletToken(user, userPermissions);
 
         return LoginResponse.builder()
                 .userId(user.getId())
@@ -96,8 +100,11 @@ public class AuthServiceImpl  implements AuthService {
         AccountWallet wallet = accountWalletRepository.findById(walletId)
                 .orElseThrow(() -> new ForbiddenException("Wallet not found"));
 
-        // 3. resolve permissions for this user in this wallet
-        List<String> permissions = groupPermissionRepository.findPermissionCodesByUserIdAndWalletId(userId, walletId);
+        // 3. resolve permissions: group permissions for this wallet + user-level permissions
+        List<String> groupPermissions = groupPermissionRepository.findPermissionCodesByUserIdAndWalletId(userId, walletId);
+        List<String> userPermissions  = userPermissionRepository.findPermissionCodesByUserId(userId);
+        List<String> permissions = new ArrayList<>(groupPermissions);
+        userPermissions.forEach(p -> { if (!permissions.contains(p)) permissions.add(p); });
 
         // 4. invalidate any existing session (wallet switch)
         sessionRepository.findByUserId(userId).ifPresent(existing -> {
@@ -148,6 +155,7 @@ public class AuthServiceImpl  implements AuthService {
         Long userId = jwtService.validateRefreshToken(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
-        return jwtService.generatePreWalletToken(user);
+        List<String> userPermissions = userPermissionRepository.findPermissionCodesByUserId(userId);
+        return jwtService.generatePreWalletToken(user, userPermissions);
     }
 }
