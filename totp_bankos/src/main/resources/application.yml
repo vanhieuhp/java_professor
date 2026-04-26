@@ -4,9 +4,9 @@ spring:
 
   # ── DATABASE ──────────────────────────────────────────────────
   datasource:
-    url: jdbc:postgresql://localhost:5432/bankos_db
-    username: ${DB_USERNAME:bankos}
-    password: ${DB_PASSWORD:bankos}
+    url: jdbc:postgresql://localhost:5432/bankos
+    username: admin
+    password: password
     driver-class-name: org.postgresql.Driver
     hikari:
       minimum-idle: 5          # minimum connections kept alive
@@ -36,9 +36,9 @@ spring:
   # ── REDIS ─────────────────────────────────────────────────────
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: localhost
+      port: 6379
+      password:
       timeout: 2000ms
       lettuce:
         pool:
