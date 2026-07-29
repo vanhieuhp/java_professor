@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>SSE Demo</title></head>
+<body>
+<h2>Clock stream</h2>
+<ul id="log"></ul>
+
+<script>
+    const log = document.getElementById('log');
+    function append(text) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        log.appendChild(li);
+    }
+
+    const source = new EventSource('http://localhost:8080/sse/numbers');
+
+    // Lắng nghe theo TÊN event cụ thể (khớp với .name("number") ở server)
+    source.addEventListener('number', (e) => {
+        append('[number] ' + e.data);
+    });
+
+    // source.addEventListener('done', (e) => {
+    //     append('[done] ' + e.data);
+    //     source.close();
+    // })
+
+    // Lắng nghe event mặc định "message" (khi server không set .name())
+    source.onmessage = (e) => {
+        append('[message] ' + e.data);
+    };
+
+    // Kết nối mở thành công
+    source.onopen = () => console.log('Connected!');
+
+    // Có lỗi (mất mạng, server đóng bất thường, v.v.)
+    source.onerror = (err) => {
+        console.log('Error / disconnected, readyState=', source.readyState);
+    };
+</script>
+</body>
+</html>
