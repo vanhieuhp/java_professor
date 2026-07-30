@@ -2,41 +2,84 @@
 <html>
 <head><meta charset="UTF-8"><title>SSE Demo</title></head>
 <body>
-<h2>Clock stream</h2>
+<h2>Notification stream (fetch + Authorization header)</h2>
 <ul id="log"></ul>
 
 <script>
     const log = document.getElementById('log');
     function append(text) {
         const li = document.createElement('li');
-        li.textContent = text;
+        li.textContent = new Date().toLocaleTimeString() + ' - ' + text;
         log.appendChild(li);
     }
 
-    const source = new EventSource('http://localhost:8080/sse/numbers');
+    const USER_ID = 'user1';
+    let lastEventId = null;
 
-    // Lắng nghe theo TÊN event cụ thể (khớp với .name("number") ở server)
-    source.addEventListener('number', (e) => {
-        append('[number] ' + e.data);
-    });
+    async function getToken() {
+        const res = await fetch('/auth/demo-login/' + USER_ID, { method: 'POST' });
+        const body = await res.json();
+        return body.token;
+    }
 
-    // source.addEventListener('done', (e) => {
-    //     append('[done] ' + e.data);
-    //     source.close();
-    // })
+    function parseEvent(rawEvent) {
+        let id = null, name = 'message', data = '';
+        for (const line of rawEvent.split('\n')) {
+            if (line.startsWith('id:')) id = line.slice(3).trim();
+            else if (line.startsWith('event:')) name = line.slice(6).trim();
+            else if (line.startsWith('data:')) data += line.slice(5).trim();
+        }
+        return { id, name, data };
+    }
 
-    // Lắng nghe event mặc định "message" (khi server không set .name())
-    source.onmessage = (e) => {
-        append('[message] ' + e.data);
-    };
+    async function connectOnce(token) {
+        const headers = { 'Authorization': 'Bearer ' + token };
+        if (lastEventId) headers['Last-Event-ID'] = lastEventId;
 
-    // Kết nối mở thành công
-    source.onopen = () => console.log('Connected!');
+        const res = await fetch('/sse/subscribe', { headers });
+        if (!res.ok) {
+            throw new Error('subscribe failed: HTTP ' + res.status);
+        }
 
-    // Có lỗi (mất mạng, server đóng bất thường, v.v.)
-    source.onerror = (err) => {
-        console.log('Error / disconnected, readyState=', source.readyState);
-    };
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            let sepIndex;
+            while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
+                const rawEvent = buffer.slice(0, sepIndex);
+                buffer = buffer.slice(sepIndex + 2);
+                if (!rawEvent.trim() || rawEvent.startsWith(':')) continue;
+
+                const evt = parseEvent(rawEvent);
+                if (evt.id) lastEventId = evt.id;
+                if (evt.name !== 'message' || evt.data) {
+                    append('[' + evt.name + '] id=' + evt.id + ' data=' + evt.data);
+                }
+            }
+        }
+    }
+
+    async function runForever() {
+        while (true) {
+            try {
+                const token = await getToken();
+                append('[connecting] token acquired, lastEventId=' + lastEventId);
+                await connectOnce(token);
+                append('[stream ended] will reconnect');
+            } catch (e) {
+                append('[error] ' + e.message + ' - will retry in 2s');
+            }
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+
+    runForever();
 </script>
 </body>
 </html>
