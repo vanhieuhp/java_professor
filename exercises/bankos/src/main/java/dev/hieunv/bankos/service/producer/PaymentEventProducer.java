@@ -1,7 +1,6 @@
 package dev.hieunv.bankos.service.producer;
 
 import dev.hieunv.bankos.avro.PaymentProcessedEvent;
-import dev.hieunv.bankos.model.Payment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecord;
 import org.springframework.beans.factory.annotation.Qualifier;
