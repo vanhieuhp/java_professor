@@ -1,0 +1,84 @@
+<svg viewBox="0 0 780 470" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Cơ chế Bitmap Scan</title>
+<desc>Hai index scan tạo ra hai bitmap đánh dấu vị trí trang khớp điều kiện, AND lại thành bitmap kết hợp, rồi đọc heap một lượt theo thứ tự trang vật lý.</desc>
+<style>
+  .box { fill: #f5f5f5; stroke: #888; stroke-width: 1.5; }
+  .lbl { font-family: sans-serif; font-size: 14px; fill: #222; text-anchor: middle; }
+  .ann { font-family: sans-serif; font-size: 12px; fill: #555; }
+  .num { font-family: sans-serif; font-size: 10px; fill: #777; text-anchor: middle; }
+  .sub { font-family: sans-serif; font-size: 11px; fill: #555; text-anchor: middle; }
+  .link { stroke: #888; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+  .cell { fill: #f5f5f5; stroke: #888; stroke-width: 1; }
+  .cellHit { fill: #c0392b; fill-opacity: 0.15; stroke: #c0392b; stroke-width: 2; }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#888"/>
+  </marker>
+</defs>
+
+<rect class="box" x="60" y="20" width="300" height="46"/>
+<text class="lbl" x="210" y="48">Index idx_user_id</text>
+<rect class="box" x="420" y="20" width="300" height="46"/>
+<text class="lbl" x="570" y="48">Index idx_status</text>
+
+<path class="link" d="M210,66 L210,100"/>
+<path class="link" d="M570,66 L570,100"/>
+
+<text class="ann" x="60" y="112">Bitmap (user_id = 42) — theo vị trí trang</text>
+<rect class="cell" x="60.0" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="97.5" y="118" width="35.5" height="30"/>
+<rect class="cell" x="135.0" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="172.5" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="210.0" y="118" width="35.5" height="30"/>
+<rect class="cell" x="247.5" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="285.0" y="118" width="35.5" height="30"/>
+<rect class="cell" x="322.5" y="118" width="35.5" height="30"/>
+<text class="num" x="77" y="164">1</text><text class="num" x="115" y="164">2</text><text class="num" x="152" y="164">3</text><text class="num" x="190" y="164">4</text><text class="num" x="227" y="164">5</text><text class="num" x="265" y="164">6</text><text class="num" x="302" y="164">7</text><text class="num" x="340" y="164">8</text>
+
+<text class="ann" x="420" y="112">Bitmap (status = 'PENDING') — theo vị trí trang</text>
+<rect class="cell" x="420.0" y="118" width="35.5" height="30"/>
+<rect class="cell" x="457.5" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="495.0" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="532.5" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="570.0" y="118" width="35.5" height="30"/>
+<rect class="cell" x="607.5" y="118" width="35.5" height="30"/>
+<rect class="cell" x="645.0" y="118" width="35.5" height="30"/>
+<rect class="cellHit" x="682.5" y="118" width="35.5" height="30"/>
+<text class="num" x="437" y="164">1</text><text class="num" x="475" y="164">2</text><text class="num" x="512" y="164">3</text><text class="num" x="550" y="164">4</text><text class="num" x="587" y="164">5</text><text class="num" x="625" y="164">6</text><text class="num" x="662" y="164">7</text><text class="num" x="700" y="164">8</text>
+
+<path class="link" d="M210,148 L385,210"/>
+<path class="link" d="M570,148 L395,210"/>
+<circle cx="390" cy="200" r="18" fill="#e8e8e8" stroke="#888" stroke-width="1.5"/>
+<text class="lbl" x="390" y="205" font-size="12">AND</text>
+<path class="link" d="M390,218 L390,244"/>
+
+<text class="ann" x="230" y="256">Bitmap kết hợp (cả 2 điều kiện đều khớp)</text>
+<rect class="cell" x="230.0" y="262" width="35.5" height="30"/>
+<rect class="cell" x="267.5" y="262" width="35.5" height="30"/>
+<rect class="cell" x="305.0" y="262" width="35.5" height="30"/>
+<rect class="cellHit" x="342.5" y="262" width="35.5" height="30"/>
+<rect class="cellHit" x="380.0" y="262" width="35.5" height="30"/>
+<rect class="cell" x="417.5" y="262" width="35.5" height="30"/>
+<rect class="cell" x="455.0" y="262" width="35.5" height="30"/>
+<rect class="cell" x="492.5" y="262" width="35.5" height="30"/>
+<text class="num" x="247" y="308">1</text><text class="num" x="285" y="308">2</text><text class="num" x="322" y="308">3</text><text class="num" x="360" y="308">4</text><text class="num" x="397" y="308">5</text><text class="num" x="435" y="308">6</text><text class="num" x="472" y="308">7</text><text class="num" x="510" y="308">8</text>
+
+<path class="link" d="M390,292 L390,326"/>
+
+<text class="ann" x="230" y="340">Bitmap Heap Scan — đọc heap 1 lượt theo thứ tự trang vật lý</text>
+<rect class="cell" x="230.0" y="346" width="35.5" height="40"/>
+<rect class="cell" x="267.5" y="346" width="35.5" height="40"/>
+<rect class="cell" x="305.0" y="346" width="35.5" height="40"/>
+<rect class="cellHit" x="342.5" y="346" width="35.5" height="40"/>
+<rect class="cellHit" x="380.0" y="346" width="35.5" height="40"/>
+<rect class="cell" x="417.5" y="346" width="35.5" height="40"/>
+<rect class="cell" x="455.0" y="346" width="35.5" height="40"/>
+<rect class="cell" x="492.5" y="346" width="35.5" height="40"/>
+<text class="sub" x="247" y="370">P1</text><text class="sub" x="285" y="370">P2</text><text class="sub" x="322" y="370">P3</text><text class="sub" x="360" y="370">P4</text><text class="sub" x="397" y="370">P5</text><text class="sub" x="435" y="370">P6</text><text class="sub" x="472" y="370">P7</text><text class="sub" x="510" y="370">P8</text>
+
+<line x1="225" y1="340" x2="525" y2="340" stroke="#555" stroke-width="1.5"/>
+
+<text class="ann" x="60" y="430" fill="#c0392b">— ô tô màu: trang khớp điều kiện (P4, P5 khớp cả user_id=42 và status='PENDING')</text>
+<text class="ann" x="60" y="450">Postgres lướt qua P1→P8 một lượt tuần tự, chỉ dừng lại lấy dữ liệu ở P4, P5 — không random-jump như Index Scan thường.</text>
+</svg>

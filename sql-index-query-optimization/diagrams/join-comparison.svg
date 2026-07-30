@@ -1,0 +1,67 @@
+<svg viewBox="0 0 780 380" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>So sánh 3 loại Join</title>
+<desc>Bảng so sánh Nested Loop Join, Hash Join, và Sort Merge Join theo điều kiện tốt nhất và chi phí.</desc>
+<style>
+  .col { fill: #f5f5f5; stroke: #888; stroke-width: 1.5; }
+  .head { fill: #e8e8e8; stroke: #888; stroke-width: 1.5; }
+  .title { font-family: sans-serif; font-size: 16px; font-weight: 600; fill: #222; text-anchor: middle; }
+  .h { font-family: sans-serif; font-size: 11px; fill: #777; text-anchor: start; }
+  .b { font-family: sans-serif; font-size: 12.5px; fill: #444; text-anchor: start; }
+  .divider { stroke: #ccc; stroke-width: 1; }
+</style>
+
+<rect class="head" x="20" y="20" width="230" height="50"/>
+<text class="title" x="135" y="51">Nested Loop</text>
+
+<rect class="head" x="270" y="20" width="230" height="50"/>
+<text class="title" x="385" y="51">Hash Join</text>
+
+<rect class="head" x="520" y="20" width="230" height="50"/>
+<text class="title" x="635" y="51">Sort Merge</text>
+
+<rect class="col" x="20" y="80" width="230" height="280"/>
+<rect class="col" x="270" y="80" width="230" height="280"/>
+<rect class="col" x="520" y="80" width="230" height="280"/>
+
+<text class="h" x="35" y="104">TỐT KHI</text>
+<text class="b" x="35" y="126">Outer table nhỏ</text>
+<text class="b" x="35" y="146">Inner table có index</text>
+<text class="b" x="35" y="166">trên cột join</text>
+
+<text class="h" x="35" y="200">CHI PHÍ</text>
+<text class="b" x="35" y="222">outer_rows ×</text>
+<text class="b" x="35" y="242">index_lookup_cost</text>
+
+<text class="h" x="35" y="280">RỦI RO</text>
+<text class="b" x="35" y="302">Không có index ở inner</text>
+<text class="b" x="35" y="322">→ O(n × m), rất tệ</text>
+
+<text class="h" x="285" y="104">TỐT KHI</text>
+<text class="b" x="285" y="126">Equality join (=)</text>
+<text class="b" x="285" y="146">Không có index phù hợp</text>
+<text class="b" x="285" y="166">Bảng nhỏ đủ vừa RAM</text>
+
+<text class="h" x="285" y="200">CHI PHÍ</text>
+<text class="b" x="285" y="222">build: rows_nhỏ</text>
+<text class="b" x="285" y="242">probe: rows_lớn (~O(1) mỗi lần)</text>
+
+<text class="h" x="285" y="280">RỦI RO</text>
+<text class="b" x="285" y="302">Hash table &gt; work_mem</text>
+<text class="b" x="285" y="322">→ spill to disk, chậm hẳn</text>
+
+<text class="h" x="535" y="104">TỐT KHI</text>
+<text class="b" x="535" y="126">Dữ liệu đã sort sẵn</text>
+<text class="b" x="535" y="146">(có index, hoặc ORDER BY</text>
+<text class="b" x="535" y="166">trùng cột join)</text>
+
+<text class="h" x="535" y="200">CHI PHÍ</text>
+<text class="b" x="535" y="222">sort (nếu chưa sort)</text>
+<text class="b" x="535" y="242">+ merge O(n + m)</text>
+
+<text class="h" x="535" y="280">RỦI RO</text>
+<text class="b" x="535" y="302">Nếu chưa sort sẵn,</text>
+<text class="b" x="535" y="322">tốn thêm bước sort riêng</text>
+
+<line class="divider" x1="270" y1="80" x2="270" y2="360"/>
+<line class="divider" x1="520" y1="80" x2="520" y2="360"/>
+</svg>

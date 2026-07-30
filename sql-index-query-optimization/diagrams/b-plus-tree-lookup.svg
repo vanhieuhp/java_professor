@@ -1,0 +1,72 @@
+<svg viewBox="0 0 720 460" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Cấu trúc B+Tree và 3 bước Index Lookup</title>
+<desc>Sơ đồ B+Tree với root, internal nodes, leaf nodes nối chuỗi, và bước truy cập bảng (heap) khi cần lấy dữ liệu đầy đủ.</desc>
+<style>
+  .box { fill: #f5f5f5; stroke: #888; stroke-width: 1.5; }
+  .root { fill: #e8e8e8; }
+  .heap { fill: #e8e8e8; stroke-dasharray: 4 3; }
+  .lbl { font-family: sans-serif; font-size: 14px; fill: #222; text-anchor: middle; }
+  .sub { font-family: sans-serif; font-size: 11px; fill: #555; text-anchor: middle; }
+  .ann { font-family: sans-serif; font-size: 12px; fill: #555; }
+  .path { stroke: #c0392b; stroke-width: 2.5; fill: none; }
+  .link { stroke: #888; stroke-width: 1.5; fill: none; }
+  .chain { stroke: #555; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+  </marker>
+  <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+  </marker>
+</defs>
+
+<path class="link" d="M290,75 L200,120"/>
+<path class="path" d="M410,75 L500,120" marker-end="url(#arrowAccent)"/>
+
+<path class="link" d="M170,150 L90,210"/>
+<path class="link" d="M230,150 L310,210"/>
+<path class="path" d="M470,150 L390,210" marker-end="url(#arrowAccent)"/>
+<path class="link" d="M530,150 L610,210"/>
+
+<path class="chain" d="M170,240 L280,240"/>
+<path class="chain" d="M390,240 L500,240"/>
+
+<path class="path" d="M350,270 L350,340" stroke-dasharray="5 4" marker-end="url(#arrowAccent)"/>
+
+<rect class="box root" x="290" y="40" width="140" height="45"/>
+<text class="lbl" x="360" y="63">Root</text>
+<text class="sub" x="360" y="78">keys điều hướng</text>
+
+<rect class="box" x="100" y="115" width="140" height="45"/>
+<text class="lbl" x="170" y="138">Internal</text>
+<rect class="box" x="430" y="115" width="140" height="45"/>
+<text class="lbl" x="500" y="138">Internal</text>
+
+<rect class="box" x="20" y="210" width="140" height="60"/>
+<text class="lbl" x="90" y="238">Leaf 1</text>
+<text class="sub" x="90" y="255">keys + row ptr</text>
+
+<rect class="box" x="200" y="210" width="140" height="60"/>
+<text class="lbl" x="270" y="238">Leaf 2</text>
+<text class="sub" x="270" y="255">keys + row ptr</text>
+
+<rect class="box" x="380" y="210" width="140" height="60"/>
+<text class="lbl" x="450" y="238">Leaf 3</text>
+<text class="sub" x="450" y="255">keys + row ptr</text>
+
+<rect class="box" x="560" y="210" width="140" height="60"/>
+<text class="lbl" x="630" y="238">Leaf 4</text>
+<text class="sub" x="630" y="255">keys + row ptr</text>
+
+<rect class="box heap" x="280" y="340" width="140" height="55"/>
+<text class="lbl" x="350" y="363">Heap (Table)</text>
+<text class="sub" x="350" y="379">dòng đầy đủ</text>
+
+<text class="ann" x="20" y="105">(1) Tree traversal — root → leaf, O(log n)</text>
+<text class="ann" x="20" y="298">(2) Leaf chain — scan ngang cho range query</text>
+<text class="ann" x="440" y="320">(3) Table access</text>
+<text class="ann" x="440" y="335">(random I/O, nếu không phải covering index)</text>
+
+<text class="ann" x="20" y="430" fill="#c0392b">— đường tô đậm: đường tra cứu cho 1 khóa tìm kiếm cụ thể</text>
+</svg>
