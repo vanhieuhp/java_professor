@@ -3,7 +3,7 @@ package dev.hieunv.riskassessment.service;
 import dev.hieunv.riskassessment.constant.BatchStatus;
 import dev.hieunv.riskassessment.constant.ScanStatus;
 import dev.hieunv.riskassessment.constant.TriggerType;
-import dev.hieunv.riskassessment.dto.WatchlistSnapshot;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
 import dev.hieunv.riskassessment.entity.CustomerScanEvent;
 import dev.hieunv.riskassessment.entity.ScanBatch;
 import dev.hieunv.riskassessment.repository.CustomerRiskResultRepository;
@@ -82,10 +82,10 @@ public class BatchScanService {
                 .existsByBlacklistFalseAndActiveTrueAndEntriesChangedAtBetween(from, to);
 
         if (listsChanged) {
-            log.info("TH3 — DS mẫu có điều chỉnh ngày {}, quét TOÀN BỘ khách hàng (T3A)", yesterday);
+            log.info("TH3 — watchlists changed on {}, scanning ALL customers (T3A)", yesterday);
             return start(TriggerType.T3A, "DS mẫu điều chỉnh ngày " + yesterday);
         }
-        log.info("TH3 — DS mẫu không đổi, chỉ quét khách hàng phát sinh ngày {} và điểm khác 7 (T3B)", yesterday);
+        log.info("TH3 — watchlists unchanged, scanning only customers created on {} whose score is not 7 (T3B)", yesterday);
         return start(TriggerType.T3B, "KH phát sinh ngày " + yesterday);
     }
 
@@ -127,11 +127,11 @@ public class BatchScanService {
             batch.setStatus(BatchStatus.COMPLETED);
             batch.setFinishedAt(Instant.now());
             scanBatchRepository.save(batch);
-            log.info("Batch {} HOÀN THÀNH — nạp {}, xử lý {}, trùng {}",
+            log.info("Batch {} COMPLETED — enqueued {}, processed {}, matched {}",
                     batchId, batch.getEnqueuedCount(), batch.getProcessedCount(), batch.getMatchedCount());
 
         } catch (RuntimeException e) {
-            log.error("Batch {} THẤT BẠI: {}", batchId, e.getMessage(), e);
+            log.error("Batch {} FAILED: {}", batchId, e.getMessage(), e);
             batch.setStatus(BatchStatus.FAILED);
             batch.setFinishedAt(Instant.now());
             batch.setNote(truncate(e.getMessage()));
@@ -180,7 +180,7 @@ public class BatchScanService {
         // Bộ đếm chỉ được lưu sau mỗi trang, nên khi job chết giữa trang nó bị lạc hậu so
         // với số bản ghi đã thực sự commit. Nguồn chân lý là bảng hàng đợi, không phải biến đếm.
         batch.setProcessedCount(
-                (int) scanQueueRepository.countByScanBatchIdAndStatus(batch.getId(), ScanStatus.DA_XU_LY));
+                (int) scanQueueRepository.countByScanBatchIdAndStatus(batch.getId(), ScanStatus.PROCESSED));
         batch.setMatchedCount((int) riskResultRepository.countByScanBatchId(batch.getId()));
 
         while (true) {
@@ -198,7 +198,7 @@ public class BatchScanService {
                     batch.setProcessedCount(batch.getProcessedCount() + 1);
                     processedInPage++;
                 } catch (RuntimeException e) {
-                    log.error("Batch {} — lỗi khi xử lý CIF {}: {}",
+                    log.error("Batch {} — error while processing CIF {}: {}",
                             batch.getId(), queued.getCif(), e.getMessage(), e);
                 }
             }
@@ -229,8 +229,8 @@ public class BatchScanService {
                 List.of(BatchStatus.ENQUEUING, BatchStatus.PROCESSING));
 
         for (ScanBatch batch : unfinished) {
-            long remaining = scanQueueRepository.countByScanBatchIdAndStatus(batch.getId(), ScanStatus.CXL);
-            log.info("Tiếp tục batch {} ({}), còn {} khách hàng chờ xử lý",
+            long remaining = scanQueueRepository.countByScanBatchIdAndStatus(batch.getId(), ScanStatus.PENDING);
+            log.info("Resuming batch {} ({}), {} customers still pending",
                     batch.getId(), batch.getTriggerType(), remaining);
             pcrtBatchExecutor.execute(() -> runBatch(batch.getId()));
         }

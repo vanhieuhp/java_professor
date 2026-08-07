@@ -13,15 +13,9 @@ import java.util.UUID;
 
 public interface CustomerRiskResultRepository extends JpaRepository<CustomerRiskResult, Long> {
 
-    /**
-     * Hạ cờ bản ghi cũ trước khi chèn bản ghi mới. Phải chạy trong CÙNG transaction với
-     * lệnh chèn, nếu không unique index {@code uq_result_latest_per_cif} sẽ từ chối —
-     * và đó là điều tốt: DB bắt lỗi thay vì để dữ liệu hỏng đi qua.
-     */
     @Modifying
-    @Query(value = "UPDATE customer_risk_result SET is_latest = FALSE WHERE cif = :cif AND is_latest",
-            nativeQuery = true)
-    int clearLatestFlag(@Param("cif") String cif);
+    @Query(value = "UPDATE CustomerRiskResult c SET c.latest = FALSE WHERE c.cif = :cif AND c.latest = TRUE ")
+    void clearLatestFlag(@Param("cif") String cif);
 
     Optional<CustomerRiskResult> findByCifAndLatestTrue(String cif);
 

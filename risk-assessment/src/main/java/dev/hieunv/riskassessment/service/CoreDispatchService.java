@@ -84,7 +84,7 @@ public class CoreDispatchService {
                 // Cầu dao đang mở: bỏ qua phần còn lại của lô. Các bản ghi này vẫn ở
                 // PENDING/FAILED nên lượt chạy sau sẽ lấy lại — không mất gì.
                 skipped = due.size() - sent - failed;
-                log.warn("Cầu dao đang MỞ — bỏ qua {} kết quả trong lượt này", skipped);
+                log.warn("Circuit breaker is OPEN — skipping {} results this round", skipped);
                 break;
             }
             if (send(result, backoffBase)) {
@@ -95,7 +95,7 @@ public class CoreDispatchService {
         }
 
         if (sent > 0 || failed > 0) {
-            log.info("Gửi Core: thành công {}, thất bại {}, bỏ qua {} — cầu dao {}",
+            log.info("Core dispatch: sent {}, failed {}, skipped {} — circuit breaker {}",
                     sent, failed, skipped, circuitBreaker.state());
         }
         return stats(sent, failed, skipped, maxAttempts);
@@ -122,19 +122,19 @@ public class CoreDispatchService {
             if (ack != null && ack.isDuplicate()) {
                 // Đây chính là bằng chứng idempotency hoạt động: PCRT tưởng chưa gửi được,
                 // nhưng Core đã nhận từ lần trước và không xử lý lại.
-                log.info("CIF {} — Core báo lệnh trùng, không xử lý lại (khóa {})",
+                log.info("CIF {} — Core reported a duplicate command, not reprocessed (key {})",
                         result.getCif(), request.getIdempotencyKey());
             }
             return true;
 
         } catch (CorePermanentException e) {
-            log.error("CIF {} — Core từ chối vĩnh viễn, ngừng gửi lại: {}", result.getCif(), e.getMessage());
+            log.error("CIF {} — Core rejected permanently, giving up on retries: {}", result.getCif(), e.getMessage());
             dispatchWriter.markFailed(result.getId(), e.getMessage(), backoffBase, false);
             return false;
 
         } catch (CoreTransientException e) {
             circuitBreaker.recordFailure();
-            log.warn("CIF {} — gửi Core thất bại (lần {}): {}",
+            log.warn("CIF {} — Core dispatch failed (attempt {}): {}",
                     result.getCif(), result.getAttemptCount() + 1, e.getMessage());
             dispatchWriter.markFailed(result.getId(), e.getMessage(), backoffBase, true);
             return false;
@@ -144,7 +144,7 @@ public class CoreDispatchService {
     /** Đưa các kết quả FAILED trở lại hàng đợi sau khi đã sửa nguyên nhân gốc. */
     public int requeueFailed() {
         int n = dispatchWriter.requeueFailed();
-        log.warn("Đã đưa {} kết quả FAILED trở lại hàng đợi gửi Core", n);
+        log.warn("Requeued {} FAILED results for Core dispatch", n);
         return n;
     }
 

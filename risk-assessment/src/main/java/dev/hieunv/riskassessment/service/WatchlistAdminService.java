@@ -1,12 +1,11 @@
 package dev.hieunv.riskassessment.service;
 
-import dev.hieunv.riskassessment.constant.MatchType;
 import dev.hieunv.riskassessment.dto.AddWatchlistEntryRequest;
 import dev.hieunv.riskassessment.entity.WatchlistCategory;
 import dev.hieunv.riskassessment.entity.WatchlistEntry;
-import dev.hieunv.riskassessment.utils.Normalizer;
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
+import dev.hieunv.riskassessment.utils.Normalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ import java.util.NoSuchElementException;
 
 /**
  * Sửa đổi danh sách — mô phỏng màn hình quản trị.
- * <p>
  * Mỗi lần sửa đều cập nhật {@code entries_changed_at} của danh sách. Một cột đó phục vụ ba
  * việc khác nhau, và đó là lý do nó tồn tại: nạp lại cache trong RAM, chọn nhánh T3A/T3B
  * ở bước B1 của TH3, và kích hoạt TH1 khi danh sách bị sửa là DS đen.
@@ -44,19 +42,12 @@ public class WatchlistAdminService {
         // kích hoạt TH1 quét toàn bộ khách hàng.
         categoryRepository.touchByCode(category.getCode());
 
-        log.warn("Đã thêm bản ghi vào [{}]{}", category.getCode(),
-                category.isBlacklist() ? " — DS ĐEN, TH1 sẽ được kích hoạt" : "");
+        log.warn("Added entry to [{}]{}", category.getCode(), category.isBlacklist() ? " — BLACKLIST, TH1 will be triggered" : "");
         return entry.getId();
     }
 
-    /**
-     * Chỉ ghi đúng nhóm cột của {@link MatchType} tương ứng, và luôn ghi kèm cột chuẩn hóa.
-     * Cả hai ràng buộc này DB cũng kiểm tra lại bằng {@code ck_entry_shape} và
-     * {@code ck_entry_norm} — code sai thì insert bị từ chối chứ không lặng lẽ tạo ra bản
-     * ghi không bao giờ match được.
-     */
     private WatchlistEntry build(WatchlistCategory category, AddWatchlistEntryRequest r) {
-        WatchlistEntry.UserBlackListBuilder builder = WatchlistEntry.builder()
+        WatchlistEntry.WatchlistEntryBuilder builder = WatchlistEntry.builder()
                 .categoryId(category.getId())
                 .matchType(category.getMatchType())
                 .source(r.getSource() == null ? "MANUAL" : r.getSource())

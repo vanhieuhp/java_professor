@@ -12,8 +12,7 @@ import java.time.LocalDate;
 
 /**
  * Thêm một bản ghi vào danh sách — mô phỏng thao tác của màn hình quản trị.
- * <p>
- * Thêm vào DS đen chính là "DS đen được điều chỉnh" ở A.1-T1, và sẽ kích hoạt TH1.
+ * Thêm vào DS đen chính là "DS đen được điều chỉnh" ở T1, và sẽ kích hoạt TH1.
  */
 @Getter
 @Setter
@@ -23,7 +22,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class AddWatchlistEntryRequest {
 
-    /** Mã danh sách: BLACKLIST, PEP, FATF_HIGH_RISK_COUNTRY, HIGH_RISK_OCCUPATION... */
     @NotBlank
     private String categoryCode;
 

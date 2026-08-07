@@ -123,7 +123,7 @@ public class DirectionBenchmarkService {
         // toàn bộ, không chỉ đường delta.
         CustomerIdentityServiceImpl.SyncResult sync = identitySyncService.fullSync();
 
-        log.warn("Reset phòng thí nghiệm: mở khóa {} CIF, xóa {} bản ghi DS đen của phép đo", unlocked, entries);
+        log.warn("Lab reset: unlocked {} CIFs, deleted {} benchmark blacklist entries", unlocked, entries);
         return Map.of("unlockedCifs", unlocked, "benchmarkEntriesRemoved", entries,
                 "mirrorScanTargets", sync.getScanTargetsInMirror());
     }
@@ -206,7 +206,7 @@ public class DirectionBenchmarkService {
             watchlistAdminService.addEntry(r.build());
             cifs.add(v.getCif());
         }
-        log.warn("Đã thêm {} bản ghi DS đen cho phép đo — đáp án mong đợi: {}", cifs.size(), cifs);
+        log.warn("Added {} blacklist entries for the benchmark — expected answer: {}", cifs.size(), cifs);
         return cifs;
     }
 

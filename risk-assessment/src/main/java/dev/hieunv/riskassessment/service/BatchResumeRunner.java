@@ -32,9 +32,9 @@ public class BatchResumeRunner implements ApplicationRunner {
         }
         List<UUID> resumed = batchScanService.resumeUnfinished();
         if (resumed.isEmpty()) {
-            log.info("Không có lần quét nào còn dở");
+            log.info("No unfinished scans to resume");
         } else {
-            log.warn("Đã tiếp tục {} lần quét còn dở: {}", resumed.size(), resumed);
+            log.warn("Resumed {} unfinished scan(s): {}", resumed.size(), resumed);
         }
     }
 }

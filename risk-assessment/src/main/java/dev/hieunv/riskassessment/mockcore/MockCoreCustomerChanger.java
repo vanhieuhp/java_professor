@@ -111,7 +111,6 @@ public class MockCoreCustomerChanger {
     private static CustomerChangedEvent toEvent(java.sql.ResultSet rs) throws java.sql.SQLException {
         Date dob = rs.getDate("dob");
         return CustomerChangedEvent.builder()
-                .coreId(rs.getLong("id"))
                 .cif(rs.getString("cif"))
                 .customerType(rs.getString("customer_type"))
                 .status(rs.getString("status"))

@@ -45,7 +45,7 @@ public class CustomerScanEvent {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private ScanStatus status = ScanStatus.CXL;
+    private ScanStatus status = ScanStatus.PENDING;
 
     @Column(name = "cif", nullable = false, length = 50)
     private String cif;

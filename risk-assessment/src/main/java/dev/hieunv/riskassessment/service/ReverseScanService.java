@@ -114,7 +114,7 @@ public class ReverseScanService {
                 scanBatchRepository.save(b);
             });
             UUID forwardId = batchScanService.startBlacklistScan();
-            log.warn("Quét ngược bỏ cuộc, đã kích hoạt quét xuôi batch {}", forwardId);
+            log.warn("Reverse scan gave up, triggered forward scan batch {}", forwardId);
             return ReverseEnqueueReport.builder()
                     .batchId(forwardId).entriesChanged(changed.size()).entriesTotal(totalEntries)
                     .candidateCount(0).probes(probes).fellBackToForward(true)
@@ -130,7 +130,7 @@ public class ReverseScanService {
         scanBatchRepository.save(batch);
 
         long millis = (System.nanoTime() - startNanos) / 1_000_000;
-        log.info("Quét ngược: {}/{} bản ghi DS đen đổi → {} ứng viên, nạp {} vào hàng đợi trong {} ms",
+        log.info("Reverse scan: {}/{} blacklist entries changed → {} candidates, {} enqueued in {} ms",
                 changed.size(), totalEntries, candidateCifs.size(), enqueued, millis);
 
         return ReverseEnqueueReport.builder()
@@ -170,7 +170,7 @@ public class ReverseScanService {
                 // Bản chiếu chỉ ra một CIF mà Core không còn — bản chiếu đã lệch.
                 // Không phải lỗi chặn: người đó biến mất khỏi Core thì cũng không cần chấm.
                 // Nhưng phải kêu lên, vì đây là triệu chứng của việc đồng bộ đang hỏng.
-                log.warn("Bản chiếu lệch: {} CIF không tìm thấy bên Core", chunk.size() - customers.size());
+                log.warn("Mirror drift: {} CIFs not found in Core", chunk.size() - customers.size());
             }
             total += scanQueueWriter.savePage(batchId, TriggerType.T1R, customers);
         }

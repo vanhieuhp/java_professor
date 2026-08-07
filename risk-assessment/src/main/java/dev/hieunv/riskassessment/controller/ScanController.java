@@ -146,7 +146,7 @@ public class ScanController {
                 .enqueuedCount(b.getEnqueuedCount())
                 .processedCount(b.getProcessedCount())
                 .matchedCount(b.getMatchedCount())
-                .pendingCount(scanQueueRepository.countByScanBatchIdAndStatus(b.getId(), ScanStatus.CXL))
+                .pendingCount(scanQueueRepository.countByScanBatchIdAndStatus(b.getId(), ScanStatus.PENDING))
                 .startedAt(b.getStartedAt())
                 .finishedAt(b.getFinishedAt())
                 .note(b.getNote())

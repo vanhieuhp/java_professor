@@ -62,7 +62,7 @@ public class ScanEnqueueService {
             // dữ liệu nguồn thay đổi giữa hai trang.
             cursor = page.get(page.size() - 1).getId();
         }
-        log.info("Batch {} — nạp xong {} khách hàng vào hàng đợi ({})", batchId, total, triggerType);
+        log.info("Batch {} — enqueued {} customers ({})", batchId, total, triggerType);
         return total;
     }
 }

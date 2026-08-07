@@ -61,6 +61,6 @@ public class MockCoreEventPublisher {
     /** Gửi thẳng chuỗi thô — để dựng được sự kiện hỏng mà không cần lách qua kiểu dữ liệu. */
     public void publishRaw(String key, String rawPayload) {
         kafkaTemplate.send(topic, key, rawPayload);
-        log.warn("[CORE] publish payload THÔ với khóa {} — {}", key, rawPayload);
+        log.warn("[CORE] publishing RAW payload with key {} — {}", key, rawPayload);
     }
 }

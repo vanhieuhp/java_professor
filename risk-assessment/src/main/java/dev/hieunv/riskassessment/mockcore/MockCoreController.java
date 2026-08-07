@@ -22,11 +22,9 @@ import java.util.Map;
 
 /**
  * CORE VÍ GIẢ — không phải một phần của PCRT.
- * <p>
  * Tồn tại để đầu kia của tích hợp có thật: nhận lệnh, thực sự cập nhật
  * {@code core.wallet_customer}, thực sự khóa CIF, và thực sự từ chối lệnh trùng. Không có
  * nó thì retry, cầu dao và idempotency chỉ là code không ai chứng minh được là chạy đúng.
- * <p>
  * Tắt bằng {@code pcrt.mock-core.enabled=false} khi trỏ sang Core thật.
  */
 @Slf4j
@@ -108,7 +106,7 @@ public class MockCoreController {
                 request.isLockCif());
 
         if (inserted == 0) {
-            log.info("[CORE] Lệnh {} đã nhận từ trước — bỏ qua", request.getIdempotencyKey());
+            log.info("[CORE] Command {} already received — skipping", request.getIdempotencyKey());
             return ResponseEntity.ok(CoreRiskUpdateAck.builder()
                     .cif(request.getCif())
                     .duplicate(true)
@@ -118,8 +116,8 @@ public class MockCoreController {
         }
 
         coreRepository.applyRiskAssessment(request.getCif(), request.getRiskScore(), request.isLockCif());
-        log.info("[CORE] CIF {} — điểm {}, {}", request.getCif(), request.getRiskScore(),
-                request.isLockCif() ? "ĐÃ KHÓA CIF" : "chỉ cập nhật điểm");
+        log.info("[CORE] CIF {} — score {}, {}", request.getCif(), request.getRiskScore(),
+                request.isLockCif() ? "CIF LOCKED" : "score updated only");
 
         return ResponseEntity.ok(CoreRiskUpdateAck.builder()
                 .cif(request.getCif())
@@ -154,7 +152,7 @@ public class MockCoreController {
         if (rejectAll != null) {
             settings.setRejectAll(rejectAll);
         }
-        log.warn("[CORE] Đổi cấu hình mô phỏng: {}", settings);
+        log.warn("[CORE] Simulation settings changed: {}", settings);
         return ResponseEntity.ok(settings);
     }
 

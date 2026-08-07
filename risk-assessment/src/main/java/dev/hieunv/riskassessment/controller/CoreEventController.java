@@ -67,7 +67,7 @@ public class CoreEventController {
         } catch (PoisonEventException e) {
             // 400 chứ không 500: lỗi nằm ở gói tin, gửi lại y nguyên cũng vô ích. Mã lỗi phải
             // nói được điều đó, nếu không người gọi sẽ thử lại mãi.
-            log.error("Sự kiện REST hỏng cấu trúc: {}", e.getMessage());
+            log.error("Structurally broken REST event: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

@@ -53,7 +53,7 @@ public class CustomerChangeProcessor {
         }
 
         if (!inbox.claim(event, rawPayload, source)) {
-            log.debug("Sự kiện {} (CIF {}) đã xử lý trước đó — bỏ qua", event.getEventId(), event.getCif());
+            log.debug("Event {} (CIF {}) already processed — skipping", event.getEventId(), event.getCif());
             return count(CoreEventOutcome.DUPLICATE);
         }
 
@@ -62,7 +62,7 @@ public class CustomerChangeProcessor {
         // "ghi log rồi bỏ", nơi bằng chứng biến mất cùng lần xoay vòng log kế tiếp.
         if (!verdict.isValid()) {
             inbox.markRejected(event.getEventId(), verdict.describe());
-            log.error("Sự kiện {} (CIF {}) KHÔNG QUA XÁC THỰC: {}",
+            log.error("Event {} (CIF {}) FAILED VALIDATION: {}",
                     event.getEventId(), event.getCif(), verdict.describe());
             return count(CoreEventOutcome.REJECTED);
         }
@@ -121,7 +121,7 @@ public class CustomerChangeProcessor {
             // Chốt thứ tự chặn: sự kiện chở dữ liệu cũ hơn bản chiếu đang giữ. Dừng tại đây.
             // Chấm tiếp sẽ sinh một kết quả mang cờ is_latest bằng dữ liệu cũ, và nó đè lên
             // kết quả mới hơn — hồ sơ rủi ro của khách hàng bị kéo lùi trong im lặng.
-            log.warn("Sự kiện {} (CIF {}) chở dữ liệu cũ hơn bản chiếu — không chấm điểm",
+            log.warn("Event {} (CIF {}) carries data older than the mirror — not scoring",
                     event.getEventId(), event.getCif());
             return CoreEventOutcome.STALE;
         }
@@ -130,14 +130,14 @@ public class CustomerChangeProcessor {
             // Bản chiếu đã cập nhật (scan_target vừa bị hạ xuống false), nhưng không chấm.
             // Đây chính là đường mà TH2 qua REST không có: thiếu nó thì khách hàng bị khóa ví
             // vẫn nằm lại trong tập quét với cờ cũ — bản chiếu chỉ có đường vào.
-            log.info("CIF {} không thuộc tập quét (type={}, status={}) — chỉ cập nhật bản chiếu",
+            log.info("CIF {} is not a scan target (type={}, status={}) — mirror updated only",
                     event.getCif(), event.getCustomerType(), event.getStatus());
             return CoreEventOutcome.MIRRORED_ONLY;
         }
 
         EvaluateCustomerResponse response = evaluationService.evaluateFromCoreEvent(toRequest(event));
         if (response.isMatched()) {
-            log.warn("Sự kiện {} — CIF {} TRÙNG DS đen qua {}, yêu cầu khóa CIF",
+            log.warn("Event {} — CIF {} MATCHED the blacklist on {}, CIF LOCK REQUIRED",
                     event.getEventId(), event.getCif(), response.getMatchedFields());
         }
         return CoreEventOutcome.SCREENED;

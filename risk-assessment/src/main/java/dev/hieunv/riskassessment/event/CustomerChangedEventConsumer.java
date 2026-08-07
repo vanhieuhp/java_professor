@@ -88,7 +88,7 @@ public class CustomerChangedEventConsumer {
      */
     private void skipPoison(ConsumerRecord<String, String> record, Acknowledgment ack, String reason) {
         poisoned.increment();
-        log.error("SỰ KIỆN HỎNG bị bỏ qua — topic={} partition={} offset={} key={} lý do={} payload={}",
+        log.error("POISON EVENT skipped — topic={} partition={} offset={} key={} reason={} payload={}",
                 record.topic(), record.partition(), record.offset(), record.key(), reason, record.value());
         ack.acknowledge();
     }

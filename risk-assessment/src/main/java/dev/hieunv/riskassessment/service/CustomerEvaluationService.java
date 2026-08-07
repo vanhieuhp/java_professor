@@ -1,7 +1,7 @@
 package dev.hieunv.riskassessment.service;
 
 import dev.hieunv.riskassessment.constant.TriggerType;
-import dev.hieunv.riskassessment.dto.WatchlistSnapshot;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
 import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
 import dev.hieunv.riskassessment.dto.EvaluateCustomerResponse;
 import dev.hieunv.riskassessment.entity.CustomerScanEvent;
@@ -62,7 +62,7 @@ public class CustomerEvaluationService {
         long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
 
         if (assessment.isEmpty()) {
-            log.info("CIF {} không trùng danh sách nào ({} ms) — không gọi Core",
+            log.info("CIF {} matched no watchlist ({} ms) — not calling Core",
                     request.getCif(), elapsedMillis);
             return EvaluateCustomerResponse.builder()
                     .cif(request.getCif())

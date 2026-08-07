@@ -9,10 +9,6 @@ import java.time.Instant;
 public class CustomerMapper {
 
     public static void applyToEntity(CustomerIdentity entity, UpsertCustomerRequest request, Instant mark) {
-        if (request.getCoreId() != null) {
-            entity.setCoreId(request.getCoreId());
-        }
-
         entity.setScanTarget(request.isScanTarget());
         entity.setFullNameNorm(Normalizer.name(request.getFullName()));
         entity.setDob(request.getDob());

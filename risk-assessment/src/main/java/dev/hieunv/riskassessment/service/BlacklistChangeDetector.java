@@ -40,7 +40,7 @@ public class BlacklistChangeDetector {
     @PostConstruct
     public void captureBaseline() {
         lastSeen = currentMark();
-        log.info("Mốc DS đen lúc khởi động: {}", lastSeen);
+        log.info("Blacklist watermark at startup: {}", lastSeen);
     }
 
     @Scheduled(fixedDelayString = "${pcrt.blacklist-detector.interval-ms:10000}")
@@ -52,10 +52,10 @@ public class BlacklistChangeDetector {
         if (Objects.equals(mark, lastSeen)) {
             return;
         }
-        log.warn("DS ĐEN ĐƯỢC ĐIỀU CHỈNH ({} -> {}) — kích hoạt TH1", lastSeen, mark);
+        log.warn("BLACKLIST CHANGED ({} -> {}) — triggering TH1", lastSeen, mark);
         lastSeen = mark;
         UUID batchId = batchScanService.startBlacklistScan();
-        log.warn("TH1 batch {} đã khởi động", batchId);
+        log.warn("TH1 batch {} started", batchId);
     }
 
     /**

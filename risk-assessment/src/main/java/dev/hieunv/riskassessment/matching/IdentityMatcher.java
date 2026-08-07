@@ -1,6 +1,8 @@
 package dev.hieunv.riskassessment.matching;
 
 import dev.hieunv.riskassessment.entity.WatchlistEntry;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
+@Component
 public final class IdentityMatcher {
 
     private final boolean matchOldIdNumber;

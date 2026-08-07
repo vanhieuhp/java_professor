@@ -6,9 +6,9 @@ import dev.hieunv.riskassessment.entity.CoreCustomer;
 import dev.hieunv.riskassessment.entity.CustomerIdentity;
 import dev.hieunv.riskassessment.event.CustomerChangedEvent;
 import dev.hieunv.riskassessment.mapper.CustomerMapper;
-import dev.hieunv.riskassessment.utils.Normalizer;
 import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.CustomerIdentityRepository;
+import dev.hieunv.riskassessment.utils.Normalizer;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -100,7 +100,7 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
     public SyncResult syncDelta() {
         int pageSize = configService.getInt("identity.sync.page.size", 2000);
         Instant since = readWatermark().minusSeconds(60);
-        log.info("Đồng bộ định danh delta từ mốc {}", since);
+        log.info("Delta identity sync from watermark {}", since);
         return run("delta", pageSize,
                 afterId -> coreCustomerRepository.findChangedAfter(since, afterId, pageSize));
     }
@@ -130,8 +130,8 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
         // Số này là số lần điều đó thật sự xảy ra — bằng 0 thì hai đường không giẫm chân nhau,
         // khác 0 thì chốt thứ tự vừa làm đúng việc của nó chứ không phải có gì hỏng.
         if (stale > 0) {
-            log.info("Đồng bộ định danh ({}): {} dòng bị chốt thứ tự bỏ qua vì bản chiếu "
-                    + "đang giữ dữ liệu mới hơn Core", mode, stale);
+            log.info("Identity sync ({}): {} rows skipped by the ordering guard because the mirror "
+                    + "holds data newer than Core", mode, stale);
         }
 
         // Chỉ dời mốc khi đã chạy hết. Ném ngoại lệ giữa chừng thì mốc giữ nguyên và lượt sau
@@ -140,7 +140,7 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
         long millis = (System.nanoTime() - startedNanos) / 1_000_000;
         long scanTargets = identityRepository.countScanTargets();
-        log.info("Đồng bộ định danh ({}) xong: {} dòng trong {} ms — bản chiếu có {} KH thuộc tập quét",
+        log.info("Identity sync ({}) finished: {} rows in {} ms — mirror holds {} scan-target customers",
                 mode, total, millis, scanTargets);
         return SyncResult.builder()
                 .mode(mode)
@@ -205,10 +205,6 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
     private static void applyTo(CustomerIdentity row, MirrorWrite w, Instant mark) {
         // COALESCE: bên gọi không biết core_id thì giữ nguyên giá trị job đồng bộ đã điền.
         // Gán thẳng sẽ xóa nó mỗi lần TH2 ghi đè.
-        if (w.coreId() != null) {
-            row.setCoreId(w.coreId());
-        }
-
         row.setScanTarget(w.scanTarget());
         row.setFullNameNorm(Normalizer.name(w.fullName()));
         row.setDob(w.dob());
@@ -250,8 +246,8 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
     private static void warnIfInFuture(String cif, String field, Instant mark, String source) {
         if (mark != null && mark.isAfter(Instant.now().plusSeconds(300))) {
-            log.warn("CIF {} — {} {} nằm ở tương lai, sẽ bị cắt về hiện tại. "
-                    + "Kiểm tra đồng hồ/múi giờ của {}.", cif, field, mark, source);
+            log.warn("CIF {} — {} {} is in the future, will be clamped to now. "
+                    + "Check the clock/timezone of {}.", cif, field, mark, source);
         }
     }
 
@@ -282,17 +278,17 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
         CustomerIdentity row = identityRepository.findByCifForUpdate(cif).orElse(null);
         if (row == null) {
-            log.warn("CIF {} — Core báo xóa nhưng bản chiếu không có dòng nào", cif);
+            log.warn("CIF {} — Core reported a delete but the mirror has no row", cif);
             return false;
         }
         if (row.getDeletedAt() != null) {
-            log.info("CIF {} — đã gỡ khỏi bản chiếu từ {}, bỏ qua sự kiện DELETED lặp",
+            log.info("CIF {} — already retired from the mirror at {}, ignoring duplicate DELETED event",
                     cif, row.getDeletedAt());
             return false;
         }
         if (row.getCoreUpdatedAt().isAfter(mark)) {
-            log.warn("CIF {} — bỏ qua gỡ khỏi bản chiếu: đang giữ dữ liệu mới hơn mốc {} "
-                    + "của sự kiện DELETED này", cif, occurredAt);
+            log.warn("CIF {} — skipping retirement: the mirror holds data newer than this DELETED "
+                    + "event's timestamp {}", cif, occurredAt);
             return false;
         }
 
@@ -303,7 +299,7 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
         row.setSyncedAt(now);
         identityRepository.save(row);
 
-        log.warn("CIF {} đã được gỡ khỏi tập quét theo sự kiện DELETED của Core", cif);
+        log.warn("CIF {} removed from the scan set per Core's DELETED event", cif);
         return true;
     }
 
@@ -401,7 +397,7 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
         try {
             return Instant.parse(raw.trim());
         } catch (java.time.format.DateTimeParseException e) {
-            log.error("Mốc đồng bộ '{}' không đọc được — chạy lại từ đầu để chắc chắn không bỏ sót", raw);
+            log.error("Sync watermark '{}' is unreadable — restarting from scratch so nothing is missed", raw);
             return Instant.EPOCH;
         }
     }

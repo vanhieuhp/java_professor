@@ -54,10 +54,10 @@ public class PcrtSchedulingConfig implements SchedulingConfigurer {
                             .get(PcrtConfigService.KEY_TH3_CRON, DEFAULT_CRON);
                     try {
                         Instant next = new CronTrigger(cron).nextExecution(context);
-                        log.info("TH3 — cron '{}', lần chạy kế tiếp {}", cron, next);
+                        log.info("TH3 — cron '{}', next run {}", cron, next);
                         return next;
                     } catch (IllegalArgumentException e) {
-                        log.error("Cron '{}' không hợp lệ, dùng mặc định '{}'", cron, DEFAULT_CRON);
+                        log.error("Cron '{}' is invalid, falling back to default '{}'", cron, DEFAULT_CRON);
                         return new CronTrigger(DEFAULT_CRON).nextExecution(context);
                     }
                 });

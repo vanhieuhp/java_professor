@@ -44,7 +44,7 @@ public class PcrtConfigService {
         try {
             return Integer.parseInt(raw.trim());
         } catch (NumberFormatException e) {
-            log.warn("Cấu hình {} = '{}' không phải số, dùng mặc định {}", key, raw, defaultValue);
+            log.warn("Config {} = '{}' is not a number, using default {}", key, raw, defaultValue);
             return defaultValue;
         }
     }

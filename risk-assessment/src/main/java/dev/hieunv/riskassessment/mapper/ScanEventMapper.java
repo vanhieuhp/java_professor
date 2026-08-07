@@ -19,7 +19,7 @@ public final class ScanEventMapper {
         return CustomerScanEvent.builder()
                 .scanBatchId(batchId)
                 .triggerType(triggerType)
-                .status(ScanStatus.CXL)
+                .status(ScanStatus.PENDING)
                 .cif(c.getCif())
                 .fullName(c.getFullName())
                 .fullNameNorm(Normalizer.name(c.getFullName()))
@@ -41,7 +41,7 @@ public final class ScanEventMapper {
         return CustomerScanEvent.builder()
                 .scanBatchId(batchId)
                 .triggerType(triggerType)
-                .status(ScanStatus.CXL)
+                .status(ScanStatus.PENDING)
                 .cif(evaluateRequest.getCif())
                 .fullName(evaluateRequest.getFullName())
                 .fullNameNorm(Normalizer.name(evaluateRequest.getFullName()))
@@ -58,11 +58,6 @@ public final class ScanEventMapper {
                 .build();
     }
 
-    /**
-     * Engine chỉ nhìn thấy kiểu thuần này. Dữ liệu lấy từ SNAPSHOT trong hàng đợi, không
-     * gọi lại Core — nên kết quả luôn khớp với đúng dữ liệu tại thời điểm quét, kể cả khi
-     * khách hàng đổi thông tin ngay sau đó.
-     */
     public static CustomerSnapshot toSnapshot(CustomerScanEvent q) {
         return CustomerSnapshot.builder()
                 .cif(q.getCif())

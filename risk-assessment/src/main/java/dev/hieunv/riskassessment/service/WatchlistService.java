@@ -1,16 +1,19 @@
 package dev.hieunv.riskassessment.service;
 
-import dev.hieunv.riskassessment.dto.WatchlistSnapshot;
-import dev.hieunv.riskassessment.matching.CompiledCategory;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryIndex;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistStatusResponse;
 
 import java.util.Optional;
 
 public interface WatchlistService {
     void reload();
 
-    WatchlistSnapshot snapshot();
+    WatchlistSnapshot getSnapshot();
 
     WatchlistSnapshot freshSnapshot();
 
-    Optional<CompiledCategory> blacklist();
+    Optional<WatchlistCategoryIndex> blacklist();
+
+    WatchlistStatusResponse getWatchlistStatus();
 }

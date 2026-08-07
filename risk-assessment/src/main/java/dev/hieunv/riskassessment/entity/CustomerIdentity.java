@@ -49,11 +49,9 @@ public class CustomerIdentity {
     @Column(name = "cif", nullable = false, length = 50)
     private String cif;
 
-    /** NULL với dòng do TH2 tạo — BE ví không biết khóa nội bộ của Core (V8). */
-    @Column(name = "core_id")
-    private Long coreId;
-
-    /** KH cá nhân + Active/Approved. Nằm trong vị từ của cả 5 partial index. */
+    /**
+     * KH cá nhân + Active/Approved. Nằm trong vị từ của cả 5 partial index.
+     */
     @Column(name = "scan_target", nullable = false)
     private boolean scanTarget;
 

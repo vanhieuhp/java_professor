@@ -53,7 +53,7 @@ public class SimpleCircuitBreaker {
         if (state == State.OPEN) {
             if (Instant.now().isAfter(openedAt.plus(openDuration))) {
                 state = State.HALF_OPEN;
-                log.warn("Cầu dao [{}] chuyển sang HALF_OPEN — cho một lời gọi đi thử", name);
+                log.warn("Circuit breaker [{}] switched to HALF_OPEN — letting one trial call through", name);
                 return true;
             }
             return false;
@@ -65,7 +65,7 @@ public class SimpleCircuitBreaker {
 
     public synchronized void recordSuccess() {
         if (state != State.CLOSED) {
-            log.warn("Cầu dao [{}] ĐÓNG lại — Core đã hồi phục", name);
+            log.warn("Circuit breaker [{}] CLOSED again — Core has recovered", name);
         }
         state = State.CLOSED;
         consecutiveFailures = 0;
@@ -76,7 +76,7 @@ public class SimpleCircuitBreaker {
         if (state == State.HALF_OPEN || consecutiveFailures >= failureThreshold) {
             state = State.OPEN;
             openedAt = Instant.now();
-            log.error("Cầu dao [{}] MỞ sau {} lần lỗi — ngừng gọi Core trong {}s",
+            log.error("Circuit breaker [{}] OPEN after {} consecutive failures — no Core calls for {}s",
                     name, consecutiveFailures, openDuration.toSeconds());
         }
     }

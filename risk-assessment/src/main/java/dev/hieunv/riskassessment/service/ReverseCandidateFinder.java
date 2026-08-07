@@ -82,7 +82,7 @@ public class ReverseCandidateFinder {
 
         boolean tooBroad = cifs.size() > max;
         if (tooBroad) {
-            log.warn("Bản ghi #{} khớp quá {} khách hàng — quá rộng để quét ngược, phải quét xuôi",
+            log.warn("Entry #{} matches more than {} customers — too broad for a reverse scan, forward scan required",
                     entry.getId(), max);
             return Candidates.builder().entryId(entry.getId()).cifs(List.of())
                     .tooBroad(true).elapsedMicros(micros).build();

@@ -1,14 +1,13 @@
 package dev.hieunv.riskassessment.service;
 
-import dev.hieunv.riskassessment.constant.MatchType;
-import dev.hieunv.riskassessment.dto.WatchlistCachePayload;
-import dev.hieunv.riskassessment.dto.WatchlistSnapshot;
+import dev.hieunv.riskassessment.dto.watchlist.Watchlist;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCachePayload;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryDto;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryIndex;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistStatusResponse;
 import dev.hieunv.riskassessment.entity.WatchlistCategory;
 import dev.hieunv.riskassessment.entity.WatchlistEntry;
-import dev.hieunv.riskassessment.matching.CIFAttributeIndex;
-import dev.hieunv.riskassessment.matching.CompiledCategory;
-import dev.hieunv.riskassessment.matching.CIFIdentityIndex;
-import dev.hieunv.riskassessment.matching.IdentityMatcher;
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
 import jakarta.annotation.PostConstruct;
@@ -32,7 +31,6 @@ public class WatchlistServiceImpl implements WatchlistService {
     private final WatchlistCategoryRepository watchlistCategoryRepo;
     private final WatchlistEntryRepository watchlistEntryRepo;
     private final WatchlistCacheService watchlistCache;
-    private final IdentityMatcher identityMatcher = new IdentityMatcher();
 
     private volatile WatchlistSnapshot current = new WatchlistSnapshot(null, List.of(), null);
 
@@ -68,7 +66,7 @@ public class WatchlistServiceImpl implements WatchlistService {
     }
 
     @Override
-    public WatchlistSnapshot snapshot() {
+    public WatchlistSnapshot getSnapshot() {
         return current;
     }
 
@@ -79,8 +77,39 @@ public class WatchlistServiceImpl implements WatchlistService {
     }
 
     @Override
-    public Optional<CompiledCategory> blacklist() {
+    public Optional<WatchlistCategoryIndex> blacklist() {
         return Optional.ofNullable(current.getBlacklist());
+    }
+
+    @Override
+    public WatchlistStatusResponse getWatchlistStatus() {
+        WatchlistSnapshot snapshot = getSnapshot();
+
+        List<WatchlistCategoryIndex> all = new ArrayList<>();
+        if (snapshot.getBlacklist() != null) {
+            all.add(snapshot.getBlacklist());
+        }
+        all.addAll(snapshot.getCifEvaluateLists());
+
+        List<WatchlistCategoryDto> categories = all.stream()
+                .map(c -> WatchlistCategoryDto.builder()
+                        .priority(c.getCategory().getPriority())
+                        .subOrder(c.getCategory().getSubOrder())
+                        .code(c.getCategory().getCode())
+                        .name(c.getCategory().getName())
+                        .matchType(c.getCategory().getMatchType())
+                        .riskLevel(c.getCategory().getRiskLevel())
+                        .riskScore(c.getCategory().getRiskScore())
+                        .entryCount(c.getEntryCount())
+                        .blacklist(c.getCategory().isBlacklist())
+                        .build())
+                .toList();
+
+        return WatchlistStatusResponse.builder()
+                .loadedFrom(snapshot.getLoadedFrom())
+                .totalEntries(categories.stream().mapToInt(WatchlistCategoryDto::getEntryCount).sum())
+                .categories(categories)
+                .build();
     }
 
     private WatchlistCachePayload readFromDatabase(Instant mark) {
@@ -92,56 +121,35 @@ public class WatchlistServiceImpl implements WatchlistService {
         WatchlistCategory blacklistCategory = watchlistCategoryRepo.findBlacklistCategory().orElse(null);
         if (blacklistCategory != null) {
             List<WatchlistEntry> entries = watchlistEntryRepo.findByCategoryIdAndActiveTrue(blacklistCategory.getId());
-            WatchlistCachePayload.CachedCategory blacklist = new WatchlistCachePayload.CachedCategory(blacklistCategory, entries);
+            Watchlist blacklist = new Watchlist(blacklistCategory, entries);
             payload.setBlacklist(blacklist);
         }
 
         // build cif evaluate lists
-        List<WatchlistCachePayload.CachedCategory> cifWatchlist = new ArrayList<>();
+        List<Watchlist> cifWatchlist = new ArrayList<>();
         for (WatchlistCategory category : watchlistCategoryRepo.findCifWatchlist()) {
-            cifWatchlist.add(buildCachedCategory(category));
+            List<WatchlistEntry> entries = watchlistEntryRepo.findByCategoryIdAndActiveTrue(category.getId());
+            cifWatchlist.add(new Watchlist(category, entries));
         }
         payload.setCifEvaluateLists(cifWatchlist);
 
         return payload;
     }
 
-    private WatchlistCachePayload.CachedCategory buildCachedCategory(WatchlistCategory category) {
-        List<WatchlistEntry> entries = watchlistEntryRepo.findByCategoryIdAndActiveTrue(category.getId());
-        return new WatchlistCachePayload.CachedCategory(category, entries);
-    }
-
     private WatchlistSnapshot buildSnapshot(WatchlistCachePayload payload) {
         WatchlistSnapshot snapshot = new WatchlistSnapshot();
         if (payload.getBlacklist() != null) {
-            snapshot.setBlacklist(compile(payload.getBlacklist().getCategory(), payload.getBlacklist().getEntries(), identityMatcher));
+            snapshot.setBlacklist(WatchlistCategoryIndex.toIndex(payload.getBlacklist()));
         }
 
         if (!CollectionUtils.isEmpty(payload.getCifEvaluateLists())) {
-            List<CompiledCategory> compiled = new ArrayList<>();
-            for (WatchlistCachePayload.CachedCategory cached : payload.getCifEvaluateLists()) {
-                compiled.add(compile(cached.getCategory(), cached.getEntries(), identityMatcher));
+            List<WatchlistCategoryIndex> compiled = new ArrayList<>();
+            for (Watchlist watchlist : payload.getCifEvaluateLists()) {
+                compiled.add(WatchlistCategoryIndex.toIndex(watchlist));
             }
             snapshot.setCifEvaluateLists(compiled);
         }
 
         return snapshot;
     }
-
-    public CompiledCategory compile(WatchlistCategory category,
-                                    List<WatchlistEntry> entries,
-                                    IdentityMatcher identityMatcher) {
-        if (category.getMatchType() == MatchType.K1) {
-            CIFIdentityIndex index = CIFIdentityIndex.build(entries);
-            return CompiledCategory.builder()
-                    .category(category)
-                    .cifIdentityIndex(index)
-                    .
-                    .build();
-            return new CompiledCategory(category, entries.size(), c -> identityMatcher.match(c, index));
-        }
-        CIFAttributeIndex index = CIFAttributeIndex.build(category.getMatchType(), entries);
-        return new CompiledCategory(category, entries.size(), index::match);
-    }
-
 }

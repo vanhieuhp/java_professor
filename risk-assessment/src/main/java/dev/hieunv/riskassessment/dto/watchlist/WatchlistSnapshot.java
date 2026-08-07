@@ -1,6 +1,5 @@
-package dev.hieunv.riskassessment.dto;
+package dev.hieunv.riskassessment.dto.watchlist;
 
-import dev.hieunv.riskassessment.matching.CompiledCategory;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,9 +16,9 @@ import java.util.List;
 @Setter
 public class WatchlistSnapshot {
 
-    private CompiledCategory blacklist;
+    private WatchlistCategoryIndex blacklist;
 
-    private List<CompiledCategory> cifEvaluateLists;
+    private List<WatchlistCategoryIndex> cifEvaluateLists;
 
     private Instant loadedFrom;
 }

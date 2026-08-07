@@ -3,16 +3,15 @@ package dev.hieunv.riskassessment.service.impl;
 import dev.hieunv.riskassessment.constant.TriggerType;
 import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
 import dev.hieunv.riskassessment.dto.EvaluateCustomerResponse;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
 import dev.hieunv.riskassessment.entity.CustomerScanEvent;
+import dev.hieunv.riskassessment.mapper.ScanEventMapper;
 import dev.hieunv.riskassessment.matching.RiskAssessment;
 import dev.hieunv.riskassessment.repository.CustomerScanEventRepository;
 import dev.hieunv.riskassessment.service.CustomerAmlService;
 import dev.hieunv.riskassessment.service.CustomerIdentityService;
-import dev.hieunv.riskassessment.service.CustomerIdentityServiceImpl;
-import dev.hieunv.riskassessment.mapper.ScanEventMapper;
 import dev.hieunv.riskassessment.service.ScanRecordProcessor;
 import dev.hieunv.riskassessment.service.WatchlistServiceImpl;
-import dev.hieunv.riskassessment.dto.WatchlistSnapshot;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,8 +28,7 @@ public class CustomerAmlServiceImpl implements CustomerAmlService {
     private final CustomerIdentityService customerIdentityService;
     private final CustomerScanEventRepository customerScanEventRepository;
     private final ScanRecordProcessor recordProcessor;
-    private final WatchlistServiceImpl blackListServiceImpl;
-    private final CustomerIdentityServiceImpl identitySyncService;
+    private final WatchlistServiceImpl watchlistService;
 
     @Transactional
     @Override
@@ -55,14 +53,13 @@ public class CustomerAmlServiceImpl implements CustomerAmlService {
         // B3 — create event
         CustomerScanEvent queued = customerScanEventRepository.save(scanEvent);
 
-        WatchlistSnapshot lists = blackListServiceImpl.freshSnapshot();
+        WatchlistSnapshot lists = watchlistService.freshSnapshot();
 
         Optional<RiskAssessment> assessment = recordProcessor.process(queued, lists, blacklistOnly);
-        long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
+        long elapsedMillis = (System.currentTimeMillis() - startedAt);
 
         if (assessment.isEmpty()) {
-            log.info("CIF {} không trùng danh sách nào ({} ms) — không gọi Core",
-                    request.getCif(), elapsedMillis);
+            log.info("Cif {} does not match any entry", request.getCif());
             return EvaluateCustomerResponse.builder()
                     .cif(request.getCif())
                     .matched(false)

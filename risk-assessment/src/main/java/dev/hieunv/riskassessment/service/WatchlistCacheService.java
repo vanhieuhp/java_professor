@@ -1,6 +1,6 @@
 package dev.hieunv.riskassessment.service;
 
-import dev.hieunv.riskassessment.dto.WatchlistCachePayload;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCachePayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,12 +49,12 @@ public class WatchlistCacheService {
         }
 
         if (payload.getSchemaVersion() != WatchlistCachePayload.CURRENT_SCHEMA_VERSION) {
-            log.info("Payload cache thuộc schema {} (code đang dùng {}) — bỏ qua",
+            log.info("Cached payload is schema {} (code uses {}) — ignoring",
                     payload.getSchemaVersion(), WatchlistCachePayload.CURRENT_SCHEMA_VERSION);
             return Optional.empty();
         }
         if (!Objects.equals(payload.getLoadedFrom(), expectedMark)) {
-            log.info("Payload cache dựng từ mốc {} nhưng DB đang ở mốc {} — bỏ qua",
+            log.info("Cached payload was built from watermark {} but the DB is at {} — ignoring",
                     payload.getLoadedFrom(), expectedMark);
             return Optional.empty();
         }
@@ -65,7 +65,7 @@ public class WatchlistCacheService {
         try {
             redis.opsForValue().set(key, objectMapper.writeValueAsString(payload), Duration.ofHours(ttlHours));
         } catch (RuntimeException e) {
-            log.warn("Không ghi được cache danh sách vào Redis ({}): {}", key, e.toString());
+            log.warn("Failed to write the watchlist cache to Redis ({}): {}", key, e.toString());
         }
     }
 
@@ -73,7 +73,7 @@ public class WatchlistCacheService {
         try {
             redis.delete(key);
         } catch (RuntimeException e) {
-            log.warn("Không xóa được key cache {}: {}", key, e.toString());
+            log.warn("Failed to delete cache key {}: {}", key, e.toString());
         }
     }
 }
