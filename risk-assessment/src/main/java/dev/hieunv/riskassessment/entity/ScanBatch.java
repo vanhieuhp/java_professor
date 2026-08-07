@@ -21,7 +21,6 @@ import java.util.UUID;
 /**
  * Một lần quét. Tồn tại để lần quét trở thành thứ quan sát được: đang ở bước nào,
  * đã nạp bao nhiêu khách hàng, xử lý tới đâu, tìm thấy bao nhiêu ca trùng.
- * <p>
  * Không có bảng này thì một batch chạy 5 triệu khách hàng là một hộp đen — không biết
  * nó còn sống hay đã chết, không biết chạy lại thì mất bao lâu.
  */

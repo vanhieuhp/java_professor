@@ -48,31 +48,15 @@ public class BatchScanService {
     private final TaskExecutor pcrtBatchExecutor;
 
     // =================================================================
-    // TH1 — DS đen được điều chỉnh (A.3)
+    // T1 — blacklist changed
     // =================================================================
-
-    /**
-     * Kích hoạt bằng SỰ KIỆN (DS đen thay đổi), không phải cron. Spec A.1-T1 nói rõ
-     * "realtime": chặn một người trong danh sách trừng phạt mà đợi tới 2 giờ sáng hôm sau
-     * thì cả ngày hôm đó họ vẫn giao dịch được.
-     */
     public UUID startBlacklistScan() {
         return start(TriggerType.T1, "DS đen được điều chỉnh");
     }
 
     // =================================================================
-    // TH3 — đánh giá định kỳ (A.5)
+    // TH3A — đánh giá định kỳ
     // =================================================================
-
-    /**
-     * Bước B1 của TH3: kiểm tra DS mẫu (khác DS đen) có được điều chỉnh trong ngày liền
-     * trước không, rồi chọn nhánh.
-     * <ul>
-     *   <li><b>Có</b> → T3A: danh sách đã đổi nên mọi khách hàng đều phải chấm lại.</li>
-     *   <li><b>Không</b> → T3B: danh sách y nguyên, chỉ khách hàng vừa thay đổi mới có thể
-     *       ra kết quả khác — quét lại toàn bộ là lãng phí.</li>
-     * </ul>
-     */
     public UUID startPeriodicScan() {
         ZoneId zone = configService.zone();
         LocalDate yesterday = LocalDate.now(zone).minusDays(1);

@@ -140,7 +140,6 @@ public class ReverseScanService {
                 .build();
     }
 
-    /** Nạp ngược rồi chạy B3 trên thread nền — đường dùng thật. */
     public UUID start(Instant since) {
         ReverseEnqueueReport report = enqueue(since);
         if (!report.isFellBackToForward()) {

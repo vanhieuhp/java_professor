@@ -29,7 +29,7 @@ import java.util.UUID;
 public class ReverseScanController {
 
     private final CustomerIdentityService identitySyncService;
-    private final CustomerIdentityRepository CifIdentityService;
+    private final CustomerIdentityRepository cifIdentityService;
     private final WatchlistEntryRepository entryRepository;
     private final ReverseScanService reverseScanService;
     private final ReverseCandidateFinder candidateFinder;
@@ -51,10 +51,10 @@ public class ReverseScanController {
     @GetMapping("/identity-mirror")
     public ResponseEntity<Map<String, Object>> mirrorStats() {
         return ResponseEntity.ok(Map.of(
-                "rows", CifIdentityService.count(),
-                "scanTargets", CifIdentityService.countScanTargets(),
+                "rows", cifIdentityService.count(),
+                "scanTargets", cifIdentityService.countScanTargets(),
                 "latestCoreUpdatedAt",
-                CifIdentityService.findLatestCoreUpdatedAt().map(Object::toString).orElse("-")));
+                cifIdentityService.findLatestCoreUpdatedAt().map(Object::toString).orElse("-")));
     }
 
     @PostMapping("/scans/blacklist-reverse")
