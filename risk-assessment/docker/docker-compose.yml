@@ -1,0 +1,62 @@
+# Kafka và Redis cho risk-assessment.
+#
+# Postgres KHÔNG nằm ở đây — nó là container `postgres` có sẵn ở cổng 5432, dùng chung
+# với các project khác trên máy này. Chỉ thêm đúng thứ đang thiếu.
+#
+# Cổng 9094 chứ không phải 9092: pcrt-lab đã giữ 9092. Hai lab phải chạy song song được.
+#
+# Trên môi trường thật đây sẽ là MỘT cluster Kafka dùng chung, phân tách bằng topic và
+# consumer group chứ không phải bằng cluster. Tách cluster ở local chỉ để mỗi lab tự khởi
+# động được mà không phụ thuộc file compose của lab kia.
+name: risk-assessment
+
+services:
+  # Cache dữ liệu danh sách — xem WatchlistCacheStore.
+  #
+  # Cổng 6381, không phải 6379: 6379 trên máy này đang bị container `leed_redis` của project
+  # khác giữ (và nó có --requirepass riêng), 6380 thì pcrt-lab đã giữ. Đi vay Redis của lab
+  # khác nghĩa là vay luôn cả mật khẩu và policy evict của họ — mà key ở đây bị evict thì
+  # mỗi instance âm thầm quay về đọc toàn bộ watchlist_entry từ Postgres.
+  redis:
+    image: redis:7-alpine
+    container_name: pcrt-cif-redis
+    ports:
+      - "6381:6379"
+    # KHÔNG bật appendonly, khác với pcrt-lab: ở đây Redis chỉ giữ dữ liệu dẫn xuất từ
+    # watchlist_category/watchlist_entry, mất là nạp lại từ Postgres được. Ghi AOF chỉ đổi
+    # lấy độ bền cho thứ vốn không cần bền.
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:4.2.1-rc1
+    container_name: pcrt-cif-kafka
+    ports:
+      - "9094:9094"
+    environment:
+      # KRaft — Kafka 4.x bỏ hẳn Zookeeper. Một node vừa là broker vừa là controller.
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9094,CONTROLLER://:9095
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9095
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # 3 partition, khóa phân vùng là CIF. Xem CoreCustomerEventPublisher để biết vì sao
+      # khóa phải là CIF chứ không phải eventId.
+      KAFKA_NUM_PARTITIONS: 3
+      CLUSTER_ID: pcrt-cif-cluster-0001
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9094 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
