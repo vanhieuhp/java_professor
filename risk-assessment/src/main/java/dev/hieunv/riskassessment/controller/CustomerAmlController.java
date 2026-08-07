@@ -4,7 +4,6 @@ import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
 import dev.hieunv.riskassessment.dto.EvaluateCustomerResponse;
 import dev.hieunv.riskassessment.dto.watchlist.WatchlistStatusResponse;
 import dev.hieunv.riskassessment.service.CustomerAmlService;
-import dev.hieunv.riskassessment.service.CustomerEvaluationService;
 import dev.hieunv.riskassessment.service.WatchlistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CustomerAmlController {
 
-    private final CustomerEvaluationService evaluationService;
     private final CustomerAmlService customerAmlService;
     private final WatchlistService watchlistService;
 
@@ -35,12 +33,11 @@ public class CustomerAmlController {
 
     /**
      * TH3 áp cho một khách hàng — so khớp toàn bộ tiêu chí trừ DS đen, duyệt theo mức ưu tiên
-     * tăng dần và dừng ở lần trùng đầu tiên (A.5-B3).
+     * tăng dần và dừng ở lần trùng đầu tiên.
      */
     @PostMapping("/customers/evaluate-periodic")
-    public ResponseEntity<EvaluateCustomerResponse> evaluatePeriodic(
-            @Valid @RequestBody CustomerEvaluateRequest request) {
-        return ResponseEntity.ok(evaluationService.evaluateAgainstWatchlists(request));
+    public ResponseEntity<EvaluateCustomerResponse> evaluatePeriodic(@Valid @RequestBody CustomerEvaluateRequest request) {
+        return ResponseEntity.ok(customerAmlService.evaluateAgainstWatchlists(request));
     }
 
     @GetMapping("/watchlists")

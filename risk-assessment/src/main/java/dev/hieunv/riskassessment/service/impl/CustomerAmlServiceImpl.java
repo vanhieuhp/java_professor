@@ -11,7 +11,6 @@ import dev.hieunv.riskassessment.repository.CustomerScanEventRepository;
 import dev.hieunv.riskassessment.service.CustomerAmlService;
 import dev.hieunv.riskassessment.service.CustomerIdentityService;
 import dev.hieunv.riskassessment.service.ScanRecordProcessor;
-import dev.hieunv.riskassessment.service.WatchlistServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,8 +31,20 @@ public class CustomerAmlServiceImpl implements CustomerAmlService {
 
     @Transactional
     @Override
+    public EvaluateCustomerResponse evaluateFromCoreEvent(CustomerEvaluateRequest request) {
+        return evaluate(request, TriggerType.T2, true, false);
+    }
+
+    @Transactional
+    @Override
     public EvaluateCustomerResponse evaluateAgainstBlacklist(CustomerEvaluateRequest request) {
         return evaluate(request, TriggerType.T2, true, true);
+    }
+
+    @Transactional
+    @Override
+    public EvaluateCustomerResponse evaluateAgainstWatchlists(CustomerEvaluateRequest request) {
+        return evaluate(request, TriggerType.T3A, false, false);
     }
 
     private EvaluateCustomerResponse evaluate(CustomerEvaluateRequest request,

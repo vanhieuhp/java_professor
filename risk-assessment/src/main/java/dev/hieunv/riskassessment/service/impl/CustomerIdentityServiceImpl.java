@@ -1,4 +1,4 @@
-package dev.hieunv.riskassessment.service;
+package dev.hieunv.riskassessment.service.impl;
 
 import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
 import dev.hieunv.riskassessment.dto.UpsertCustomerRequest;
@@ -8,6 +8,8 @@ import dev.hieunv.riskassessment.event.CustomerChangedEvent;
 import dev.hieunv.riskassessment.mapper.CustomerMapper;
 import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.CustomerIdentityRepository;
+import dev.hieunv.riskassessment.service.CustomerIdentityService;
+import dev.hieunv.riskassessment.service.PcrtConfigService;
 import dev.hieunv.riskassessment.utils.Normalizer;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
@@ -36,9 +38,6 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
     private static final Set<String> SCAN_TARGET_STATUSES = Set.of("ACTIVE", "APPROVED");
 
-    /**
-     * Phiên bản quy tắc chuẩn hóa đang dùng — đổi {@link Normalizer} thì tăng số này.
-     */
     private static final short NORMALIZER_VERSION = 1;
 
     private final CoreCustomerRepository coreCustomerRepository;
@@ -48,21 +47,6 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
     private final PlatformTransactionManager transactionManager;
     private final JdbcTemplate jdbcTemplate;
 
-    /**
-     * Ranh giới transaction của job đồng bộ: <b>một trang, một transaction</b>.
-     *
-     * <h2>Vì sao là TransactionTemplate chứ không phải {@code @Transactional}</h2>
-     * Hai lý do, mỗi lý do đều đủ:
-     * <ul>
-     *   <li>{@link #upsertPage} được gọi từ {@link #run} trong cùng một đối tượng. Proxy của
-     *       Spring không chặn được lời gọi nội bộ, nên annotation trên method private đó sẽ
-     *       <b>im lặng không có tác dụng</b> — code trông như có transaction mà không có.</li>
-     *   <li>Đặt annotation lên {@code run} thì 5 triệu dòng nằm trong một transaction: một
-     *       snapshot giữ suốt nhiều phút, undo log phình ra, và một lỗi ở trang cuối cuốn theo
-     *       toàn bộ công đã làm. Một transaction mỗi trang giữ đúng hành vi cũ của
-     *       {@code batchUpdate}.</li>
-     * </ul>
-     */
     private TransactionTemplate pageTransaction;
 
     @PostConstruct
@@ -72,30 +56,13 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
     public static final String KEY_WATERMARK = "identity.sync.watermark";
 
-    /**
-     * Nạp lần đầu: toàn bộ Core. Chạy một lần, sau đó chỉ chạy {@link #syncDelta()}.
-     */
+    @Override
     public SyncResult fullSync() {
         int pageSize = configService.getInt("identity.sync.page.size", 2000);
         return run("toàn bộ", pageSize,
                 afterId -> coreCustomerRepository.findAllAfter(afterId, pageSize));
     }
 
-    /**
-     * Đồng bộ delta theo {@code update_time} của Core.
-     *
-     * <h2>Mốc lấy từ đâu</h2>
-     * Từ {@code pcrt_config}, nơi chỉ job này ghi. <b>Không</b> lấy bằng
-     * {@code max(core_updated_at)} của bảng chiếu: từ khi TH2 được phép ghi vào bảng đó, giá
-     * trị ấy do một hệ thống khác quyết định, và chỉ cần một sự kiện mang mốc tương lai là
-     * mốc đồng bộ vượt qua hiện tại rồi không bao giờ khớp dòng nào nữa. Job vẫn chạy, vẫn
-     * báo thành công, vẫn ghi "0 dòng" — bản chiếu đứng yên và không ai biết.
-     *
-     * <h2>Vì sao lùi lại 1 phút</h2>
-     * Dùng {@code >} thì bỏ sót dòng có mốc đúng bằng mốc cũ; dùng {@code >=} thì lặp lại.
-     * Bỏ sót trong AML nặng hơn nhiều so với xử lý lại, mà upsert vốn idempotent — nên chọn
-     * chồng lấn.
-     */
     @Override
     public SyncResult syncDelta() {
         int pageSize = configService.getInt("identity.sync.page.size", 2000);

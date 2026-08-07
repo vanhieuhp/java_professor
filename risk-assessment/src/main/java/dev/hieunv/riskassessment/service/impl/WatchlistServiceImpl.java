@@ -1,7 +1,5 @@
-package dev.hieunv.riskassessment.service;
+package dev.hieunv.riskassessment.service.impl;
 
-import dev.hieunv.riskassessment.dto.watchlist.Watchlist;
-import dev.hieunv.riskassessment.dto.watchlist.WatchlistCachePayload;
 import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryDto;
 import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryIndex;
 import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
@@ -10,6 +8,7 @@ import dev.hieunv.riskassessment.entity.WatchlistCategory;
 import dev.hieunv.riskassessment.entity.WatchlistEntry;
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
+import dev.hieunv.riskassessment.service.WatchlistService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,6 @@ public class WatchlistServiceImpl implements WatchlistService {
 
     private final WatchlistCategoryRepository watchlistCategoryRepo;
     private final WatchlistEntryRepository watchlistEntryRepo;
-    private final WatchlistCacheService watchlistCache;
 
     private volatile WatchlistSnapshot current = new WatchlistSnapshot(null, List.of(), null);
 
@@ -52,17 +50,8 @@ public class WatchlistServiceImpl implements WatchlistService {
 
     @Override
     public synchronized void reload() {
-        Instant mark = watchlistCategoryRepo.findLatestEntriesChangedAt();
-
-        Optional<WatchlistCachePayload> cached = watchlistCache.find(mark);
-        if (cached.isPresent()) {
-            current = buildSnapshot(cached.get());
-            return;
-        }
-
-        WatchlistCachePayload payload = readFromDatabase(mark);
-        current = buildSnapshot(payload);
-        watchlistCache.save(payload);
+        Instant lastTime = watchlistCategoryRepo.findLatestEntriesChangedAt();
+        current = buildSnapshot(lastTime);
     }
 
     @Override
@@ -112,44 +101,29 @@ public class WatchlistServiceImpl implements WatchlistService {
                 .build();
     }
 
-    private WatchlistCachePayload readFromDatabase(Instant mark) {
-        WatchlistCachePayload payload = new WatchlistCachePayload();
-        payload.setLoadedFrom(mark);
-        payload.setSchemaVersion(WatchlistCachePayload.CURRENT_SCHEMA_VERSION);
+    private WatchlistSnapshot buildSnapshot(Instant lastTime) {
+        WatchlistSnapshot snapshot = new WatchlistSnapshot();
+        snapshot.setLoadedFrom(lastTime);
+        snapshot.setCifEvaluateLists(new ArrayList<>());
 
         // build blacklist rules
         WatchlistCategory blacklistCategory = watchlistCategoryRepo.findBlacklistCategory().orElse(null);
         if (blacklistCategory != null) {
             List<WatchlistEntry> entries = watchlistEntryRepo.findByCategoryIdAndActiveTrue(blacklistCategory.getId());
-            Watchlist blacklist = new Watchlist(blacklistCategory, entries);
-            payload.setBlacklist(blacklist);
+            snapshot.setBlacklist(WatchlistCategoryIndex.toIndex(blacklistCategory, entries));
         }
 
         // build cif evaluate lists
-        List<Watchlist> cifWatchlist = new ArrayList<>();
         for (WatchlistCategory category : watchlistCategoryRepo.findCifWatchlist()) {
             List<WatchlistEntry> entries = watchlistEntryRepo.findByCategoryIdAndActiveTrue(category.getId());
-            cifWatchlist.add(new Watchlist(category, entries));
-        }
-        payload.setCifEvaluateLists(cifWatchlist);
-
-        return payload;
-    }
-
-    private WatchlistSnapshot buildSnapshot(WatchlistCachePayload payload) {
-        WatchlistSnapshot snapshot = new WatchlistSnapshot();
-        if (payload.getBlacklist() != null) {
-            snapshot.setBlacklist(WatchlistCategoryIndex.toIndex(payload.getBlacklist()));
-        }
-
-        if (!CollectionUtils.isEmpty(payload.getCifEvaluateLists())) {
-            List<WatchlistCategoryIndex> compiled = new ArrayList<>();
-            for (Watchlist watchlist : payload.getCifEvaluateLists()) {
-                compiled.add(WatchlistCategoryIndex.toIndex(watchlist));
+            if (CollectionUtils.isEmpty(entries)) {
+                continue;
             }
-            snapshot.setCifEvaluateLists(compiled);
+            WatchlistCategoryIndex index = WatchlistCategoryIndex.toIndex(category, entries);
+            snapshot.getCifEvaluateLists().add(index);
         }
 
         return snapshot;
     }
+
 }

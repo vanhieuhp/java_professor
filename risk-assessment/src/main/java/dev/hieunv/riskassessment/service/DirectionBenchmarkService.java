@@ -10,6 +10,8 @@ import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.CustomerRiskResultRepository;
 import dev.hieunv.riskassessment.repository.ScanBatchRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
+import dev.hieunv.riskassessment.service.impl.CustomerIdentityServiceImpl;
+import dev.hieunv.riskassessment.service.impl.WatchlistServiceImpl;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

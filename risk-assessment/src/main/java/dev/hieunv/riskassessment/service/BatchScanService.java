@@ -10,6 +10,7 @@ import dev.hieunv.riskassessment.repository.CustomerRiskResultRepository;
 import dev.hieunv.riskassessment.repository.CustomerScanEventRepository;
 import dev.hieunv.riskassessment.repository.ScanBatchRepository;
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
+import dev.hieunv.riskassessment.service.impl.WatchlistServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskExecutor;

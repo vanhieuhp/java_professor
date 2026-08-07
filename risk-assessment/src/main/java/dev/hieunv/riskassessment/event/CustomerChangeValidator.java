@@ -10,37 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Xác thực sự kiện trước khi cho vào đường xử lý.
- *
- * <h2>Hai hạng lỗi, hai số phận khác nhau</h2>
- * <ul>
- *   <li><b>Lỗi cấu trúc</b> — thiếu {@code eventId}, {@code cif} hoặc {@code changeType}.
- *       Không ghi nổi vào inbox vì chính ba cột đó là NOT NULL, và không có {@code eventId}
- *       thì cũng không chống trùng được. Chỉ còn cách ghi log rồi bỏ.</li>
- *   <li><b>Lỗi nghiệp vụ</b> — đủ khóa nhưng dữ liệu sai (ngày sinh ở tương lai, trạng thái
- *       lạ, thiếu họ tên). Ghi được vào inbox kèm lý do, {@code processed_at} để NULL. Truy
- *       vấn được, chạy lại được sau khi Core sửa nguồn.</li>
- * </ul>
- * Phân biệt này quan trọng hơn vẻ ngoài của nó. Gộp cả hai vào "log rồi bỏ" thì một lỗi tích
- * hợp ở phía Core sẽ âm thầm loại hàng nghìn khách hàng khỏi diện rà soát, và bằng chứng duy
- * nhất nằm trong file log — thứ sẽ bị xoay vòng sau vài ngày.
- *
- * <h2>Vì sao lỗi xác thực KHÔNG được thử lại</h2>
- * Một sự kiện thiếu họ tên sẽ thiếu họ tên ở lần thử thứ một nghìn. Thử lại chỉ làm partition
- * đứng im, và mọi khách hàng phía sau trong partition đó ngừng được rà soát — một lỗi dữ
- * liệu của MỘT khách hàng làm tê liệt cả một phần ba lưu lượng.
- */
 @Component
 public class CustomerChangeValidator {
 
     private static final Set<String> KNOWN_STATUSES = Set.of("ACTIVE", "APPROVED", "LOCKED", "CLOSED");
     private static final Set<String> KNOWN_CUSTOMER_TYPES = Set.of("CN", "TC");
 
-    /** Sớm hơn mốc này thì gần như chắc chắn là lỗi nhập liệu, không phải cụ già 130 tuổi. */
     private static final LocalDate EARLIEST_PLAUSIBLE_DOB = LocalDate.of(1900, 1, 1);
 
-    /** Lệch đồng hồ giữa hai máy chủ là bình thường; lệch quá mức này thì là lỗi cấu hình. */
     private static final long CLOCK_SKEW_TOLERANCE_SECONDS = 300;
 
     public Verdict validate(CustomerChangedEvent e) {
@@ -120,7 +97,9 @@ public class CustomerChangeValidator {
     @Builder
     @Getter
     public static class Verdict {
-        /** true = hỏng tới mức không ghi nổi vào inbox. */
+        /**
+         * true = hỏng tới mức không ghi nổi vào inbox.
+         */
         private final boolean structural;
         private final List<String> problems;
 

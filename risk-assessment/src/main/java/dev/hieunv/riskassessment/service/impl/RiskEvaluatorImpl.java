@@ -1,9 +1,11 @@
 package dev.hieunv.riskassessment.service.impl;
 
+import dev.hieunv.riskassessment.constant.MatchType;
+import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryIndex;
 import dev.hieunv.riskassessment.dto.watchlist.WatchlistSnapshot;
 import dev.hieunv.riskassessment.entity.WatchlistCategory;
-import dev.hieunv.riskassessment.dto.watchlist.WatchlistCategoryIndex;
 import dev.hieunv.riskassessment.matching.CustomerSnapshot;
+import dev.hieunv.riskassessment.matching.IdentityMatcher;
 import dev.hieunv.riskassessment.matching.MatchDetail;
 import dev.hieunv.riskassessment.matching.RiskAssessment;
 import dev.hieunv.riskassessment.service.RiskEvaluator;
@@ -23,19 +25,16 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RiskEvaluatorImpl implements RiskEvaluator {
 
+    private final IdentityMatcher matcher;
+
     /**
      * TH3 — duyệt 15 DS mẫu theo mức ưu tiên TĂNG DẦN, dừng ngay ở lần trùng ĐẦU TIÊN
-     * Không cộng dồn điểm nhiều danh sách. Thang 7/5/4/3/2 là nhãn phân loại ordinal, không
-     * phải đại lượng đo được — cộng ra 10 thì không có mức rủi ro nào ứng với nó và không có
-     * lý do nào giải trình được. Mỗi kết quả phải quy về đúng MỘT bản ghi trong MỘT danh sách.
-     * Thứ tự ưu tiên được thiết kế sao cho danh sách trùng đầu tiên cũng là danh sách nghiêm
-     * trọng nhất, nên dừng sớm không làm mất kết quả nặng hơn — nó chỉ tiết kiệm công quét.
      */
     @Override
     public Optional<RiskAssessment> evaluateAgainstWatchlists(CustomerSnapshot customer,
                                                               WatchlistSnapshot lists) {
         for (WatchlistCategoryIndex category : lists.getCifEvaluateLists()) {
-            Optional<MatchDetail> detail = category.match(customer);
+            Optional<MatchDetail> detail = evaluateMatch(customer, category);
             if (detail.isPresent()) {
                 return detail.map(d -> toAssessment(customer, category.getCategory(), d, false));
             }
@@ -55,8 +54,16 @@ public class RiskEvaluatorImpl implements RiskEvaluator {
             log.warn("No blacklist configured — skipping evaluation for CIF {}", customer.getCif());
             return Optional.empty();
         }
-        return blacklist.match(customer)
+        return matcher.matchCifIdentity(customer, blacklist.getCifIdentityIndex())
                 .map(detail -> toAssessment(customer, blacklist.getCategory(), detail, true));
+    }
+
+    public Optional<MatchDetail> evaluateMatch(CustomerSnapshot customer, WatchlistCategoryIndex index) {
+        if (index.getCategory().getMatchType() == MatchType.K1) {
+            return matcher.matchCifIdentity(customer, index.getCifIdentityIndex());
+        } else {
+            return matcher.matchCifAttribute(customer, index.getCifAttributeIndex());
+        }
     }
 
     private RiskAssessment toAssessment(CustomerSnapshot customer,

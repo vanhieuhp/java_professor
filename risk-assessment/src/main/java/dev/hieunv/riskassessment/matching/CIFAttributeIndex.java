@@ -30,6 +30,13 @@ public class CIFAttributeIndex {
         return new CIFAttributeIndex(matchType, byValue);
     }
 
+    public WatchlistEntry byValue(String normalizedCode) {
+        if (normalizedCode == null) {
+            return null;
+        }
+        return byValue.get(normalizedCode);
+    }
+
     public Optional<MatchDetail> match(CustomerSnapshot customer) {
         String value = Normalizer.code(customerValue(customer));
         if (value == null) {
