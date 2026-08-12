@@ -51,16 +51,18 @@ public class CustomerScanEvent {
     private String cif;
 
     /* K1 */
-    @Column(name = "full_name")
+    // 320 chứ không phải 255: Core tách họ tên làm ba cột varchar(100), ghép lại có thể
+    // vượt 255 — xem migration V14.
+    @Column(name = "full_name", length = 320)
     private String fullName;
 
-    @Column(name = "full_name_norm")
+    @Column(name = "full_name_norm", length = 320)
     private String fullNameNorm;
 
     @Column(name = "dob")
     private LocalDate dob;
 
-    @Column(name = "phone", length = 30)
+    @Column(name = "phone", length = 50)
     private String phone;
 
     @Column(name = "phone_norm", length = 15)
@@ -82,12 +84,14 @@ public class CustomerScanEvent {
     @Column(name = "country_code", length = 2)
     private String countryCode;
 
-    @Column(name = "occupation_code", length = 50)
+    // Core trả về chữ tự do varchar(100) chứ không phải mã — xem V14.
+    @Column(name = "occupation_code", length = 100)
     private String occupationCode;
 
-    @Column(name = "position_code", length = 50)
+    @Column(name = "position_code", length = 100)
     private String positionCode;
 
+    /** Không còn được điền: Core thật không có cột điểm rủi ro nào. Xem {@code ScanEventMapper}. */
     @Column(name = "core_risk_score")
     private Short coreRiskScore;
 

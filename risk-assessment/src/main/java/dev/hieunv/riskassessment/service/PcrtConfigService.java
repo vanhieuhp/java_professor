@@ -7,8 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
-
 /**
  * Đọc tham số vận hành từ bảng {@code pcrt_config}.
  * <p>
@@ -25,7 +23,6 @@ public class PcrtConfigService {
     public static final String KEY_PAGE_SIZE = "batch.page.size";
     public static final String KEY_TH1_AUTO = "th1.auto.trigger.enabled";
     public static final String KEY_RESUME_ON_STARTUP = "batch.resume.on.startup";
-    public static final String KEY_TIMEZONE = "pcrt.timezone";
 
     private final PcrtConfigRepository configRepository;
 
@@ -52,11 +49,6 @@ public class PcrtConfigService {
     public boolean getBoolean(String key, boolean defaultValue) {
         String raw = get(key, null);
         return raw == null ? defaultValue : Boolean.parseBoolean(raw.trim());
-    }
-
-    /** Múi giờ dùng để xác định "ngày liền trước" của TH3. */
-    public ZoneId zone() {
-        return ZoneId.of(get(KEY_TIMEZONE, "Asia/Ho_Chi_Minh"));
     }
 
     public int pageSize() {

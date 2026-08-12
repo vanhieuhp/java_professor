@@ -14,7 +14,7 @@ import java.util.Set;
 public class CustomerChangeValidator {
 
     private static final Set<String> KNOWN_STATUSES = Set.of("ACTIVE", "APPROVED", "LOCKED", "CLOSED");
-    private static final Set<String> KNOWN_CUSTOMER_TYPES = Set.of("CN", "TC");
+    private static final Set<String> KNOWN_CUSTOMER_TYPES = Set.of("I", "O");
 
     private static final LocalDate EARLIEST_PLAUSIBLE_DOB = LocalDate.of(1900, 1, 1);
 

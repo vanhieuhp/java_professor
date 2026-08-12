@@ -27,7 +27,13 @@ public interface WatchlistCategoryRepository extends JpaRepository<WatchlistCate
             """)
     List<WatchlistCategory> findCifWatchlist();
 
-    boolean existsByBlacklistFalseAndActiveTrueAndEntriesChangedAtBetween(Instant from, Instant to);
+    @Query("""
+            SELECT count(c) > 0
+            FROM WatchlistCategory c
+            WHERE c.blacklist = false AND c.active = true
+            AND c.entriesChangedAt BETWEEN :from AND :to
+            """)
+    boolean hasCifWatchlistChanges(@Param("from") Instant from, @Param("to") Instant to);
 
     @Query(value = "SELECT max(entries_changed_at) FROM watchlist_category WHERE active", nativeQuery = true)
     Instant findLatestEntriesChangedAt();

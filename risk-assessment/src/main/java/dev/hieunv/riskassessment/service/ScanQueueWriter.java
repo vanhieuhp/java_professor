@@ -1,7 +1,7 @@
 package dev.hieunv.riskassessment.service;
 
 import dev.hieunv.riskassessment.constant.TriggerType;
-import dev.hieunv.riskassessment.entity.CoreCustomer;
+import dev.hieunv.riskassessment.core.CoreCustomer;
 import dev.hieunv.riskassessment.entity.CustomerScanEvent;
 import dev.hieunv.riskassessment.mapper.ScanEventMapper;
 import dev.hieunv.riskassessment.repository.CustomerScanEventRepository;
@@ -12,14 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Ghi một trang khách hàng vào hàng đợi, mỗi trang một transaction.
- * <p>
- * Phải là bean riêng chứ không phải method của {@link ScanEnqueueService}: Spring áp
- * {@code @Transactional} bằng proxy, nên lời gọi {@code this.savePage(...)} từ trong cùng
- * class sẽ đi thẳng vào method thật và bỏ qua annotation — không có transaction nào được
- * mở, và không có lỗi nào báo ra.
- */
 @Service
 @RequiredArgsConstructor
 public class ScanQueueWriter {

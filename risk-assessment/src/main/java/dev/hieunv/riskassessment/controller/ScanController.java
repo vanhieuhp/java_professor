@@ -10,6 +10,7 @@ import dev.hieunv.riskassessment.repository.CustomerRiskResultRepository;
 import dev.hieunv.riskassessment.repository.CustomerScanEventRepository;
 import dev.hieunv.riskassessment.repository.ScanBatchRepository;
 import dev.hieunv.riskassessment.service.BatchScanService;
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import dev.hieunv.riskassessment.service.CoreDispatchService;
 import dev.hieunv.riskassessment.service.PcrtConfigService;
 import dev.hieunv.riskassessment.service.WatchlistAdminService;

@@ -1,12 +1,12 @@
 package dev.hieunv.riskassessment.service.impl;
 
+import dev.hieunv.riskassessment.core.CoreCustomer;
+import dev.hieunv.riskassessment.core.service.CoreCustomerServiceImpl;
 import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
 import dev.hieunv.riskassessment.dto.UpsertCustomerRequest;
-import dev.hieunv.riskassessment.entity.CoreCustomer;
 import dev.hieunv.riskassessment.entity.CustomerIdentity;
 import dev.hieunv.riskassessment.event.CustomerChangedEvent;
 import dev.hieunv.riskassessment.mapper.CustomerMapper;
-import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.CustomerIdentityRepository;
 import dev.hieunv.riskassessment.service.CustomerIdentityService;
 import dev.hieunv.riskassessment.service.PcrtConfigService;
@@ -15,20 +15,17 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,16 +33,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
-    private static final Set<String> SCAN_TARGET_STATUSES = Set.of("ACTIVE", "APPROVED");
+    /** Trạng thái của Core giả — vẫn còn hiệu lực trên đường sự kiện, xem {@link #isScanTarget}. */
+    private static final Set<String> MOCK_CORE_SCAN_TARGET_STATUSES = Set.of("ACTIVE", "APPROVED");
 
     private static final short NORMALIZER_VERSION = 1;
 
-    private final CoreCustomerRepository coreCustomerRepository;
+    private final CoreCustomerServiceImpl customerServiceImpl;
     private final CustomerIdentityRepository identityRepository;
     private final PcrtConfigService configService;
     private final EntityManager entityManager;
     private final PlatformTransactionManager transactionManager;
-    private final JdbcTemplate jdbcTemplate;
 
     private TransactionTemplate pageTransaction;
 
@@ -59,27 +56,34 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
     @Override
     public SyncResult fullSync() {
         int pageSize = configService.getInt("identity.sync.page.size", 2000);
-        return run("toàn bộ", pageSize,
-                afterId -> coreCustomerRepository.findAllAfter(afterId, pageSize));
+        return run("toàn bộ", afterId -> customerServiceImpl.nextPage(afterId, pageSize));
     }
 
+    /**
+     * Đồng bộ delta — nay chỉ bắt được khách hàng MỚI MỞ VÍ, không bắt được thay đổi hồ sơ.
+     * <p>
+     * Core không có cột nào ghi lại lần sửa cuối ({@code upd_seq} và {@code last_audit_id} là
+     * hằng số trên toàn bảng), nên mốc duy nhất so được là ngày mở ví. Hệ quả phải nói rõ:
+     * lưới hứng cho sự kiện TH2 bị mất <b>không còn</b>. Một khách hàng đổi họ tên mà sự kiện
+     * Kafka thất lạc sẽ nằm sai trong bản chiếu cho tới lần đồng bộ TOÀN BỘ kế tiếp.
+     */
     @Override
     public SyncResult syncDelta() {
         int pageSize = configService.getInt("identity.sync.page.size", 2000);
         Instant since = readWatermark().minusSeconds(60);
-        log.info("Delta identity sync from watermark {}", since);
-        return run("delta", pageSize,
-                afterId -> coreCustomerRepository.findChangedAfter(since, afterId, pageSize));
+        log.info("Delta identity sync from watermark {} — new enrollments only, profile edits are invisible "
+                + "to this path because Core has no modification timestamp", since);
+        return run("delta", afterId -> customerServiceImpl.nextEnrolledAfterPage(since, afterId, pageSize));
     }
 
-    private SyncResult run(String mode, int pageSize, LongFunction<List<CoreCustomer>> pageReader) {
+    private SyncResult run(String mode, Function<String, List<CoreCustomer>> pageReader) {
         long startedNanos = System.nanoTime();
 
         // Chốt mốc mới TRƯỚC khi đọc, và ghi lại sau khi xong. Lấy mốc lúc kết thúc sẽ bỏ sót
         // mọi thay đổi phát sinh trong lúc lượt này đang chạy — với 5 triệu dòng thì đó là
         // vài phút thay đổi biến mất không dấu vết.
-        Instant runStartedAt = dbNow();
-        long cursor = 0L;
+        Instant runStartedAt = customerServiceImpl.coreNow();
+        String cursor = "";
         int total = 0;
         int stale = 0;
 
@@ -90,7 +94,7 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
             }
             stale += upsertPage(page);
             total += page.size();
-            cursor = page.get(page.size() - 1).getId();
+            cursor = page.get(page.size() - 1).getCif();
         }
 
         // Job đọc Core rồi ghi bản chiếu; giữa hai việc đó đường realtime ghi xen vào được.
@@ -170,14 +174,16 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
     }
 
     private static void applyTo(CustomerIdentity row, MirrorWrite w, Instant mark) {
-        // COALESCE: bên gọi không biết core_id thì giữ nguyên giá trị job đồng bộ đã điền.
-        // Gán thẳng sẽ xóa nó mỗi lần TH2 ghi đè.
         row.setScanTarget(w.scanTarget());
         row.setFullNameNorm(Normalizer.name(w.fullName()));
         row.setDob(w.dob());
         row.setPhoneNorm(Normalizer.phone(w.phone()));
         row.setIdNumberNorm(Normalizer.idNumber(w.idNumber()));
         row.setOldIdNumberNorm(Normalizer.idNumber(w.oldIdNumber()));
+        // Nguyên văn cho báo cáo — xem CustomerIdentity.
+        row.setFullName(w.fullName());
+        row.setPhone(w.phone());
+        row.setIdNumber(w.idNumber());
         row.setNormalizerVersion(NORMALIZER_VERSION);
         row.setCoreUpdatedAt(mark);
         row.setSyncedAt(Instant.now());
@@ -196,7 +202,6 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
      */
     @lombok.Builder
     private record MirrorWrite(String cif,
-                               Long coreId,
                                boolean scanTarget,
                                String fullName,
                                LocalDate dob,
@@ -276,10 +281,22 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
      * Thiếu trường thì hiểu theo hướng <b>vẫn quét</b>. Đây là lựa chọn có chủ ý: rà soát
      * nhầm một khách hàng ngoài diện chỉ tốn công, còn loại nhầm một khách hàng trong diện
      * là bỏ sót — và bỏ sót thì không ai phát hiện ra.
+     *
+     * <h2>Vì sao trạng thái chấp nhận CẢ HAI bộ mã</h2>
+     * Loại khách hàng nay dùng chung một bộ mã {@code I}/{@code O} ở cả Core thật lẫn Core giả,
+     * nên chỉ cần hỏi cấu hình. Trạng thái thì chưa: Core thật dùng một ký tự (A, C, L, P, X)
+     * còn Core giả vẫn phát {@code ACTIVE}/{@code APPROVED}. Nhận cả hai là cách giữ nguyên tắc
+     * "nghi ngờ thì vẫn quét" trong quãng giao thời — chọn một bộ và loại bộ kia sẽ tạo ra
+     * false negative ở đúng cái đường sinh ra để bắt thay đổi tức thời.
+     * <p>
+     * Khi Core thật bắt đầu phát sự kiện, bỏ nhánh mã của Core giả đi.
      */
-    public static boolean isScanTarget(CustomerChangedEvent e) {
-        boolean individual = e.getCustomerType() == null || "CN".equals(e.getCustomerType());
-        boolean active = e.getStatus() == null || SCAN_TARGET_STATUSES.contains(e.getStatus());
+    public boolean isScanTarget(CustomerChangedEvent e) {
+        boolean individual = e.getCustomerType() == null
+                || customerServiceImpl.isIndividualType(e.getCustomerType());
+        boolean active = e.getStatus() == null
+                || MOCK_CORE_SCAN_TARGET_STATUSES.contains(e.getStatus())
+                || customerServiceImpl.isScanTargetStatus(e.getStatus());
         return individual && active;
     }
 
@@ -315,18 +332,17 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
         for (CoreCustomer c : page) {
             MirrorWrite w = MirrorWrite.builder()
                     .cif(c.getCif())
-                    .coreId(c.getId())
-                    // KHÔNG dùng isScanTarget: đó là quy tắc của đường sự kiện, nơi thiếu
-                    // trường thì hiểu theo hướng vẫn quét. Ở đây dữ liệu đọc thẳng từ Core nên
-                    // không có trường nào thiếu, và "null nghĩa là không phải KH cá nhân".
-                    .scanTarget("CN".equals(c.getCustomerType())
-                            && SCAN_TARGET_STATUSES.contains(c.getStatus()))
+                    // KHÔNG dùng isScanTarget(CustomerChangedEvent): đó là quy tắc của đường
+                    // sự kiện, nơi thiếu trường thì hiểu theo hướng vẫn quét. Ở đây dữ liệu đọc
+                    // thẳng từ Core nên không trường nào thiếu, và tập trạng thái cần quét là
+                    // tham số cấu hình — CoreCustomerReader giữ định nghĩa duy nhất của nó.
+                    .scanTarget(customerServiceImpl.isScanTarget(c))
                     .fullName(c.getFullName())
                     .dob(c.getDob())
                     .phone(c.getPhone())
                     .idNumber(c.getIdNumber())
                     .oldIdNumber(c.getOldIdNumber())
-                    .occurredAt(c.getUpdateTime())
+                    .occurredAt(c.getCoreUpdatedAt())
                     .build();
 
             Instant mark = clampToNow(w.occurredAt());
@@ -347,13 +363,6 @@ public class CustomerIdentityServiceImpl implements CustomerIdentityService {
         entityManager.flush();
         entityManager.clear();
         return stale;
-    }
-
-    /**
-     * Giờ của DATABASE. Mốc đồng bộ so với {@code update_time} do Postgres sinh — phải cùng đồng hồ.
-     */
-    private Instant dbNow() {
-        return jdbcTemplate.queryForObject("SELECT now()", Timestamp.class).toInstant();
     }
 
     private Instant readWatermark() {

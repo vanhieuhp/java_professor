@@ -2,8 +2,8 @@ package dev.hieunv.riskassessment.mapper;
 
 import dev.hieunv.riskassessment.constant.ScanStatus;
 import dev.hieunv.riskassessment.constant.TriggerType;
+import dev.hieunv.riskassessment.core.CoreCustomer;
 import dev.hieunv.riskassessment.dto.CustomerEvaluateRequest;
-import dev.hieunv.riskassessment.entity.CoreCustomer;
 import dev.hieunv.riskassessment.entity.CustomerScanEvent;
 import dev.hieunv.riskassessment.matching.CustomerSnapshot;
 import dev.hieunv.riskassessment.utils.Normalizer;
@@ -33,7 +33,6 @@ public final class ScanEventMapper {
                 .countryCode(Normalizer.code(c.getCountryCode()))
                 .occupationCode(Normalizer.code(c.getOccupationCode()))
                 .positionCode(Normalizer.code(c.getPositionCode()))
-                .coreRiskScore(c.getRiskScore())
                 .build();
     }
 

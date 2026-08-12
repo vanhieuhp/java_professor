@@ -2,14 +2,15 @@ package dev.hieunv.riskassessment.service;
 
 import dev.hieunv.riskassessment.constant.BatchStatus;
 import dev.hieunv.riskassessment.constant.TriggerType;
-import dev.hieunv.riskassessment.entity.CoreCustomer;
+import dev.hieunv.riskassessment.core.CoreCustomer;
+import dev.hieunv.riskassessment.core.service.CoreCustomerServiceImpl;
 import dev.hieunv.riskassessment.entity.ScanBatch;
 import dev.hieunv.riskassessment.entity.WatchlistCategory;
 import dev.hieunv.riskassessment.entity.WatchlistEntry;
-import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.ScanBatchRepository;
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -53,11 +54,11 @@ public class ReverseScanService {
 
     private final WatchlistCategoryRepository categoryRepository;
     private final WatchlistEntryRepository entryRepository;
-    private final CoreCustomerRepository coreCustomerRepository;
+    private final CoreCustomerServiceImpl customerServiceImpl;
     private final ScanBatchRepository scanBatchRepository;
     private final ScanQueueWriter scanQueueWriter;
     private final ReverseCandidateFinder candidateFinder;
-    private final BatchScanService batchScanService;
+    private final BatchScanServiceImpl batchScanServiceImpl;
     private final PcrtConfigService configService;
 
     /**
@@ -113,7 +114,7 @@ public class ReverseScanService {
                 b.setNote("Có bản ghi quá rộng — chuyển sang quét xuôi");
                 scanBatchRepository.save(b);
             });
-            UUID forwardId = batchScanService.startBlacklistScan();
+            UUID forwardId = batchScanServiceImpl.startBlacklistScan();
             log.warn("Reverse scan gave up, triggered forward scan batch {}", forwardId);
             return ReverseEnqueueReport.builder()
                     .batchId(forwardId).entriesChanged(changed.size()).entriesTotal(totalEntries)
@@ -143,7 +144,7 @@ public class ReverseScanService {
     public UUID start(Instant since) {
         ReverseEnqueueReport report = enqueue(since);
         if (!report.isFellBackToForward()) {
-            batchScanService.runBatchAsync(report.getBatchId());
+            batchScanServiceImpl.runBatchAsync(report.getBatchId());
         }
         return report.getBatchId();
     }
@@ -164,7 +165,7 @@ public class ReverseScanService {
         int total = 0;
         for (int from = 0; from < all.size(); from += pageSize) {
             List<String> chunk = all.subList(from, Math.min(from + pageSize, all.size()));
-            List<CoreCustomer> customers = coreCustomerRepository.findByCifIn(chunk);
+            List<CoreCustomer> customers = customerServiceImpl.findByCifIn(chunk);
             if (customers.size() != chunk.size()) {
                 // Bản chiếu chỉ ra một CIF mà Core không còn — bản chiếu đã lệch.
                 // Không phải lỗi chặn: người đó biến mất khỏi Core thì cũng không cần chấm.

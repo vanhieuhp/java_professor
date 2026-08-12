@@ -55,7 +55,7 @@ public class CustomerIdentity {
     @Column(name = "scan_target", nullable = false)
     private boolean scanTarget;
 
-    @Column(name = "full_name_norm")
+    @Column(name = "full_name_norm", length = 320)
     private String fullNameNorm;
 
     @Column(name = "dob")
@@ -66,6 +66,21 @@ public class CustomerIdentity {
 
     @Column(name = "id_number_norm", length = 50)
     private String idNumberNorm;
+
+    // ----- Nguyên văn, CHỈ để hiển thị -----
+    //
+    // Không dùng ba cột này để so khớp. Chuẩn hóa mới là cách PCRT hiểu dữ liệu, và toàn bộ
+    // luật K1 chạy trên cột *_norm; đối chiếu chỗ này chỗ kia sẽ cho ra hai kết quả khác nhau
+    // cho cùng một khách hàng. Chúng tồn tại vì báo cáo không thể in "NGUYEN VAN AN".
+
+    @Column(name = "full_name", length = 320)
+    private String fullName;
+
+    @Column(name = "phone", length = 50)
+    private String phone;
+
+    @Column(name = "id_number", length = 50)
+    private String idNumber;
 
     @Column(name = "old_id_number_norm", length = 50)
     private String oldIdNumberNorm;

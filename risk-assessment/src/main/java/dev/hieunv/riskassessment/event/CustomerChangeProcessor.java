@@ -89,7 +89,7 @@ public class CustomerChangeProcessor {
             return CoreEventOutcome.STALE;
         }
 
-        if (!CustomerIdentityServiceImpl.isScanTarget(event)) {
+        if (!identitySync.isScanTarget(event)) {
             log.info("CIF {} is not a scan target (type={}, status={}) — mirror updated only",
                     event.getCif(), event.getCustomerType(), event.getStatus());
             return CoreEventOutcome.MIRRORED_ONLY;

@@ -1,6 +1,6 @@
 package dev.hieunv.riskassessment.config;
 
-import dev.hieunv.riskassessment.service.BatchScanService;
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import dev.hieunv.riskassessment.service.CoreDispatchService;
 import dev.hieunv.riskassessment.service.PcrtConfigService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class PcrtSchedulingConfig implements SchedulingConfigurer {
     private static final String DEFAULT_CRON = "0 0 2 * * *";
 
     private final ObjectProvider<PcrtConfigService> configServiceProvider;
-    private final ObjectProvider<BatchScanService> batchScanServiceProvider;
+    private final ObjectProvider<BatchScanServiceImpl> batchScanServiceProvider;
     private final ObjectProvider<CoreDispatchService> coreDispatchServiceProvider;
 
     @Override

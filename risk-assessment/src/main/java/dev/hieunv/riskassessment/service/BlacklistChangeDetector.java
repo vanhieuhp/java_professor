@@ -1,6 +1,7 @@
 package dev.hieunv.riskassessment.service;
 
 import dev.hieunv.riskassessment.repository.WatchlistCategoryRepository;
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ import java.util.UUID;
 public class BlacklistChangeDetector {
 
     private final WatchlistCategoryRepository categoryRepository;
-    private final BatchScanService batchScanService;
+    private final BatchScanServiceImpl batchScanServiceImpl;
     private final PcrtConfigService configService;
 
     private volatile Instant lastSeen;
@@ -54,7 +55,7 @@ public class BlacklistChangeDetector {
         }
         log.warn("BLACKLIST CHANGED ({} -> {}) — triggering TH1", lastSeen, mark);
         lastSeen = mark;
-        UUID batchId = batchScanService.startBlacklistScan();
+        UUID batchId = batchScanServiceImpl.startBlacklistScan();
         log.warn("TH1 batch {} started", batchId);
     }
 

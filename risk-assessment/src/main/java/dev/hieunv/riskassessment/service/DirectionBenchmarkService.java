@@ -2,20 +2,23 @@ package dev.hieunv.riskassessment.service;
 
 import dev.hieunv.riskassessment.constant.BatchStatus;
 import dev.hieunv.riskassessment.constant.TriggerType;
+import dev.hieunv.riskassessment.core.CoreCustomer;
+import dev.hieunv.riskassessment.core.service.CoreCustomerServiceImpl;
 import dev.hieunv.riskassessment.dto.AddWatchlistEntryRequest;
-import dev.hieunv.riskassessment.entity.CoreCustomer;
 import dev.hieunv.riskassessment.entity.CustomerRiskResult;
 import dev.hieunv.riskassessment.entity.ScanBatch;
-import dev.hieunv.riskassessment.repository.CoreCustomerRepository;
 import dev.hieunv.riskassessment.repository.CustomerRiskResultRepository;
 import dev.hieunv.riskassessment.repository.ScanBatchRepository;
 import dev.hieunv.riskassessment.repository.WatchlistEntryRepository;
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import dev.hieunv.riskassessment.service.impl.CustomerIdentityServiceImpl;
+import dev.hieunv.riskassessment.service.impl.ScanEnqueueServiceImpl;
 import dev.hieunv.riskassessment.service.impl.WatchlistServiceImpl;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +45,7 @@ import java.util.UUID;
  * bỏ sót người thì không phải tối ưu, mà là lỗi.
  *
  * <h2>Vì sao chạy chiều ngược TRƯỚC</h2>
- * Quét xuôi đọc toàn bộ {@code core.wallet_customer} và làm nóng buffer cache của Postgres.
+ * Quét xuôi đọc toàn bộ bảng khách hàng bên Core và làm nóng buffer cache của nó.
  * Chạy nó trước rồi mới đo chiều ngược là tự làm đẹp cho chiều ngược. Đảo lại thứ tự để phép
  * đo nghiêng về phía bất lợi cho kết luận mình muốn chứng minh.
  */
@@ -51,19 +54,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DirectionBenchmarkService {
 
-    private final CoreCustomerRepository coreCustomerRepository;
+    private final CoreCustomerServiceImpl customerServiceImpl;
     private final CustomerRiskResultRepository riskResultRepository;
     private final ScanBatchRepository scanBatchRepository;
     private final WatchlistEntryRepository entryRepository;
     private final WatchlistAdminService watchlistAdminService;
     private final WatchlistServiceImpl blackListServiceImpl;
     private final CustomerIdentityServiceImpl identitySyncService;
-    private final ScanEnqueueService enqueueService;
-    private final BatchScanService batchScanService;
+    private final ScanEnqueueServiceImpl enqueueService;
+    private final BatchScanServiceImpl batchScanServiceImpl;
     private final ReverseScanService reverseScanService;
     private final BlacklistChangeDetector blacklistChangeDetector;
     private final PcrtConfigService configService;
     private final JdbcTemplate jdbcTemplate;
+
+    /** Phòng thí nghiệm chỉ dọn được phía Core khi phía đó là Core giả. */
+    @Value("${pcrt.mock-core.enabled:false}")
+    private boolean mockCoreEnabled;
 
     /**
      * Chạy phép đo. Hai công tắc phải tắt trong suốt phép đo, và cả hai đều học được từ một
@@ -103,14 +110,21 @@ public class DirectionBenchmarkService {
      * đo không so sánh được với nhau.
      */
     public Map<String, Object> reset() {
-        // Trả các CIF mà Core giả đã khóa về Active. Chỉ đụng tới CIF có trong nhật ký lệnh —
+        // Trả các CIF mà Core GIẢ đã khóa về Active. Chỉ đụng tới CIF có trong nhật ký lệnh —
         // CIF-SKIP-LOCKED được seed sẵn ở trạng thái LOCKED có chủ ý, phải để nguyên.
-        int unlocked = jdbcTemplate.update("""
-                UPDATE core.wallet_customer
-                SET status = 'ACTIVE', risk_score = NULL
-                WHERE cif IN (SELECT DISTINCT cif FROM core.risk_update_log)
-                """);
-        jdbcTemplate.update("DELETE FROM core.risk_update_log");
+        //
+        // Chỉ chạy khi Core giả đang bật. Từ khi chiều đọc trỏ sang Core THẬT (MariaDB), hai
+        // bảng dưới đây thuộc về phòng thí nghiệm chứ không còn là nguồn dữ liệu của phép đo:
+        // xóa chúng không đưa Core thật về mốc gốc, và Core thật thì PCRT không được phép ghi.
+        int unlocked = 0;
+        if (mockCoreEnabled) {
+            unlocked = jdbcTemplate.update("""
+                    UPDATE core.wallet_customer
+                    SET status = 'ACTIVE', risk_score = NULL
+                    WHERE cif IN (SELECT DISTINCT cif FROM core.risk_update_log)
+                    """);
+            jdbcTemplate.update("DELETE FROM core.risk_update_log");
+        }
 
         int entries = jdbcTemplate.update("DELETE FROM watchlist_entry WHERE source = 'BENCHMARK'");
         jdbcTemplate.update("DELETE FROM customer_risk_result");
@@ -156,7 +170,7 @@ public class DirectionBenchmarkService {
         reverseOnly.removeAll(forwardMatched);
 
         return BenchmarkReport.builder()
-                .customersInCore(coreCustomerRepository.countScanTargets())
+                .customersInCore(customerServiceImpl.countScanTargets())
                 .newBlacklistEntries(newEntries)
                 .expectedCifs(new TreeSet<>(expectedCifs))
                 .forward(forward)
@@ -180,14 +194,14 @@ public class DirectionBenchmarkService {
      */
     private Set<String> seedBlacklistEntries(int n) {
         List<CoreCustomer> victims = new ArrayList<>();
-        long cursor = 10_000L;   // bỏ qua khối CIF cài sẵn ở đầu bảng
+        String cursor = "";
         while (victims.size() < n) {
-            List<CoreCustomer> page = coreCustomerRepository.findScanTargetsAfter(cursor, n - victims.size());
+            List<CoreCustomer> page = customerServiceImpl.nextScanTargetPage(cursor, n - victims.size());
             if (page.isEmpty()) {
                 break;
             }
             victims.addAll(page);
-            cursor = page.get(page.size() - 1).getId();
+            cursor = page.get(page.size() - 1).getCif();
         }
 
         Set<String> cifs = new LinkedHashSet<>();
@@ -198,18 +212,54 @@ public class DirectionBenchmarkService {
                     .source("BENCHMARK")
                     .sourceRef("BENCH-" + v.getCif());
 
-            switch (i % 3) {
-                // Vế 1 của luật: chỉ Số GTTT là đủ.
-                case 0 -> r.idNumber(v.getIdNumber());
-                // Vế 2: đủ 2/4 trường trên cùng một bản ghi.
-                case 1 -> r.fullName(v.getFullName()).dob(v.getDob());
-                default -> r.fullName(v.getFullName()).phone(v.getPhone());
+            // Hình dạng bản ghi phải dựng được từ dữ liệu người đó THẬT SỰ có. Core thật không
+            // giữ Số GTTT cho ~98% khách hàng cá nhân, nên nhánh "chỉ Số GTTT" chỉ dùng được
+            // khi có; thiếu thì lùi về nhánh hai trường. Ép dựng bản ghi rỗng sẽ tạo ra một
+            // đáp án mà không chiều nào bắt được, và phép đo báo cả hai chiều đều sai.
+            boolean seeded = switch (i % 3) {
+                case 0 -> seedByIdNumber(r, v) || seedByNameAndDob(r, v) || seedByNameAndPhone(r, v);
+                case 1 -> seedByNameAndDob(r, v) || seedByNameAndPhone(r, v) || seedByIdNumber(r, v);
+                default -> seedByNameAndPhone(r, v) || seedByNameAndDob(r, v) || seedByIdNumber(r, v);
+            };
+            if (!seeded) {
+                log.warn("Skipping CIF {} as a benchmark victim — Core holds no field combination "
+                        + "the K1 rule can match on", v.getCif());
+                continue;
             }
             watchlistAdminService.addEntry(r.build());
             cifs.add(v.getCif());
         }
         log.warn("Added {} blacklist entries for the benchmark — expected answer: {}", cifs.size(), cifs);
         return cifs;
+    }
+
+    /** Vế 1 của luật: chỉ Số GTTT là đủ. */
+    private static boolean seedByIdNumber(AddWatchlistEntryRequest.AddWatchlistEntryRequestBuilder r,
+                                          CoreCustomer v) {
+        if (v.getIdNumber() == null) {
+            return false;
+        }
+        r.idNumber(v.getIdNumber());
+        return true;
+    }
+
+    /** Vế 2: đủ 2/4 trường trên cùng một bản ghi. */
+    private static boolean seedByNameAndDob(AddWatchlistEntryRequest.AddWatchlistEntryRequestBuilder r,
+                                            CoreCustomer v) {
+        if (v.getFullName() == null || v.getDob() == null) {
+            return false;
+        }
+        r.fullName(v.getFullName()).dob(v.getDob());
+        return true;
+    }
+
+    private static boolean seedByNameAndPhone(AddWatchlistEntryRequest.AddWatchlistEntryRequestBuilder r,
+                                              CoreCustomer v) {
+        if (v.getFullName() == null || v.getPhone() == null) {
+            return false;
+        }
+        r.fullName(v.getFullName()).phone(v.getPhone());
+        return true;
     }
 
     /** Chiều xuôi: nạp toàn bộ KH vào hàng đợi rồi chấm từng người. */
@@ -229,7 +279,7 @@ public class DirectionBenchmarkService {
         scanBatchRepository.save(batch);
 
         long t2 = System.nanoTime();
-        batchScanService.runBatch(batchId);   // đồng bộ, không qua executor
+        batchScanServiceImpl.runBatch(batchId);   // đồng bộ, không qua executor
         long t3 = System.nanoTime();
 
         return ForwardRun.builder()
@@ -249,7 +299,7 @@ public class DirectionBenchmarkService {
         long t1 = System.nanoTime();
 
         long t2 = System.nanoTime();
-        batchScanService.runBatch(report.getBatchId());
+        batchScanServiceImpl.runBatch(report.getBatchId());
         long t3 = System.nanoTime();
 
         return ReverseRun.builder()

@@ -1,5 +1,6 @@
 package dev.hieunv.riskassessment.service;
 
+import dev.hieunv.riskassessment.service.impl.BatchScanServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -22,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BatchResumeRunner implements ApplicationRunner {
 
-    private final BatchScanService batchScanService;
+    private final BatchScanServiceImpl batchScanServiceImpl;
     private final PcrtConfigService configService;
 
     @Override
@@ -30,7 +31,7 @@ public class BatchResumeRunner implements ApplicationRunner {
         if (!configService.getBoolean(PcrtConfigService.KEY_RESUME_ON_STARTUP, true)) {
             return;
         }
-        List<UUID> resumed = batchScanService.resumeUnfinished();
+        List<UUID> resumed = batchScanServiceImpl.resumeUnfinished();
         if (resumed.isEmpty()) {
             log.info("No unfinished scans to resume");
         } else {

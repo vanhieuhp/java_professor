@@ -20,20 +20,15 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    // Redis giữ dữ liệu danh sách đã nạp (xem WatchlistCacheStore). Chỉ cần StringRedisTemplate
-    // do starter tự cấu hình — JSON tự tay bằng ObjectMapper của Spring, không dùng serializer
-    // của spring-data-redis để không phụ thuộc vào việc bản nào bind sang Jackson 3.
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-flyway'
-    // starter-kafka, KHÔNG phải 'org.springframework.kafka:spring-kafka' trần. Bản trần
-    // compile được và app vẫn khởi động, nhưng không có auto-configuration nào chạy nên
-    // KafkaTemplate không tồn tại — lỗi chỉ lộ ra lúc inject bean, không lộ lúc build.
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.flywaydb:flyway-database-postgresql'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
