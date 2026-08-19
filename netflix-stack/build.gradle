@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'hieunv.dev'
+version = '0.0.1-SNAPSHOT'
+description = 'netflix-stack'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Redis làm KHO DỮ LIỆU, không phải kho HTTP session.
+    //
+    // Trước đây khai báo starter-session-data-redis. Nó vẫn chạy được — kéo theo
+    // spring-data-redis + Lettuce transitively — nhưng nói sai ý định: nó bật
+    // Spring Session, thứ hệ này không dùng. Khai báo dependency là một dạng tài
+    // liệu; sai ở đây thì người đọc sau hiểu sai vai trò của Redis.
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Tuần 04 mới thật sự dùng. Giữ sẵn để cấu trúc package không phải đổi giữa chừng.
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
+    // Tuần 08 — HTTP API. Bật khi tới đó:
+    // implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
+
+    // Tuần 01 cần Redis THẬT, không phải mock.
+    //
+    // Mock Redis sẽ trả lời đúng những gì bạn nghĩ Redis làm — nên nó không bao giờ
+    // bác bỏ được giả định của bạn. Cả bài tập đếm trùng chỉ có nghĩa khi ZSET là
+    // ZSET thật và script Lua chạy trong Redis thật.
+    // BOM khai báo tường minh: Boot 4.1 quản lý spring-boot-testcontainers nhưng
+    // KHÔNG quản lý org.testcontainers:*, nên thiếu dòng này là build hỏng ở
+    // compileTestJava với "Could not find org.testcontainers:junit-jupiter:".
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.21.3')
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
