@@ -27,6 +27,13 @@ dependencies {
     // liệu; sai ở đây thì người đọc sau hiểu sai vai trò của Redis.
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // starter-data-redis kéo theo Lettuce, không phải Jedis. Distributed Counter
+    // Lab so sánh kiến trúc (Direct INCR, batched, ...) cần Jedis trần — mỗi
+    // thread một connection từ pool riêng — để mô phỏng đúng cách một server HTTP
+    // truyền thống (Tomcat thread-per-request) gọi Redis, khác hẳn mô hình
+    // reactive/netty của Lettuce.
+    implementation 'redis.clients:jedis'
+
     // Tuần 04 mới thật sự dùng. Giữ sẵn để cấu trúc package không phải đổi giữa chừng.
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
 
