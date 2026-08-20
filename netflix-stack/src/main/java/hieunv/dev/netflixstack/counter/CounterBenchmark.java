@@ -110,6 +110,8 @@ public class CounterBenchmark {
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                } finally {
+                    done.countDown();
                 }
             });
             thread.start();
