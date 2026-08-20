@@ -1,0 +1,32 @@
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: netflix-stack-cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=netflix-stack
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+#  redis:      # plays the role of EVCache for the rollup cache layer
+#    image: redis:7
+#    container_name: netflix-stack-redis
+#    ports:
+#      - "6379:6379"
+#    healthcheck:
+#      test: ["CMD", "redis-cli", "ping"]
+#      interval: 5s
+#      timeout: 3s
+#      retries: 5
+#    restart: unless-stopped
+
+volumes:
+  cassandra-data:
