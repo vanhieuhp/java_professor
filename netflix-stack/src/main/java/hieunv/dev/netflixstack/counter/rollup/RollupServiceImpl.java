@@ -35,7 +35,6 @@ public class RollupServiceImpl implements RollupService {
         requireCounterId(counterId);
 
         Instant passStartedAt = Instant.now();
-        long writeTimestampMicros = toMicros(passStartedAt);
         Instant safeUpperBound = passStartedAt.minusMillis(rollupLagMillis);
 
         RollupCheckpoint checkpoint = rollupStore.getCheckpoint(counterId);
@@ -76,12 +75,13 @@ public class RollupServiceImpl implements RollupService {
 
         long newCount = checkpoint.lastRollupCount() + delta;
         boolean written = aggregated > 0;
+        long lastTimeRollup = toMicros(newTs);
         if (written) {
-            rollupStore.saveCheckpoint(new RollupCheckpoint(counterId, newCount, newTs), writeTimestampMicros);
+            rollupStore.saveCheckpoint(new RollupCheckpoint(counterId, newCount, newTs), lastTimeRollup);
             log.info("rollup[{}] folded {} event(s): count {} -> {} (delta={}), ts {} -> {}, "
                             + "usingTimestamp={}, {} event(s) left inside the lag window",
                     counterId, aggregated, checkpoint.lastRollupCount(), newCount, delta,
-                    previousTs, newTs, writeTimestampMicros, skippedTooFresh);
+                    previousTs, newTs, lastTimeRollup, skippedTooFresh);
         } else {
             log.debug("rollup[{}] no-op: nothing to fold in ({} event(s) still inside the lag window), "
                             + "checkpoint left at count={} ts={}",
@@ -90,7 +90,7 @@ public class RollupServiceImpl implements RollupService {
 
         return new RollupResult(counterId, checkpoint.lastRollupCount(), newCount, delta,
                 events.size(), aggregated, skippedAlreadyRolled, skippedTooFresh,
-                previousTs, newTs, writeTimestampMicros, written);
+                previousTs, newTs, lastTimeRollup, written);
     }
 
     @Override
@@ -148,26 +148,6 @@ public class RollupServiceImpl implements RollupService {
         return after;
     }
 
-    /**
-     * Cassandra write timestamps are microseconds since epoch, not millis.
-     */
-    /**
-     * Clamps how far back the event-log read may start.
-     *
-     * <p>Not an optimisation - without it a first-ever rollup is unrunnable.
-     * A fresh checkpoint reads as {@code Instant.EPOCH}, and EventLogStore's
-     * range read issues one Cassandra query per hour bucket because time_bucket
-     * is part of the partition key. From 1970 to today that is roughly half a
-     * million queries for a counter that may hold five events. The floor turns
-     * a first pass into a bounded read over the last {@code maxLookbackHours}.
-     *
-     * <p>The cost is stated plainly rather than hidden: events older than the
-     * floor are never folded in. For a first pass that is intended (a brand-new
-     * checkpoint has no history worth reconstructing), so it logs at DEBUG. For
-     * a checkpoint that has fallen further behind than the lookback window it
-     * means real data loss, so that case logs at WARN - either the pass stopped
-     * running, or the window is too tight for this counter's write rate.
-     */
     private Instant readFloor(String counterId, Instant passStartedAt, Instant lastRollupTs) {
         Instant floor = passStartedAt.minus(maxLookbackHours, ChronoUnit.HOURS);
         if (!lastRollupTs.isBefore(floor)) {
