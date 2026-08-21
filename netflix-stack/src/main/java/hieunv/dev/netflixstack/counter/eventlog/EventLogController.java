@@ -27,7 +27,6 @@ public class EventLogController {
 
     @PostMapping
     public CounterEvent addEvent(@RequestBody CounterEvent event) {
-        log.info("POST /events {}", event);
         store.addEvent(event);
         return event;
     }
