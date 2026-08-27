@@ -1,7 +1,7 @@
 services:
   cassandra:
     image: cassandra:4.1
-    container_name: netflix-stack-cassandra
+    container_name: cassandra
     ports:
       - "9042:9042"
     environment:
@@ -14,6 +14,25 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16.15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=netflix_stack
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d netflix_stack"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
 #  redis:      # plays the role of EVCache for the rollup cache layer
@@ -30,3 +49,4 @@ services:
 
 volumes:
   cassandra-data:
+  postgres-data:
