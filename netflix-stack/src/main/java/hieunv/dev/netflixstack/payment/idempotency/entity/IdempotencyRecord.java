@@ -1,4 +1,4 @@
-package hieunv.dev.netflixstack.payment.idempotency;
+package hieunv.dev.netflixstack.payment.idempotency.entity;
 
 import hieunv.dev.netflixstack.common.IdempotencyStatus;
 import hieunv.dev.netflixstack.common.RecoveryPoint;
@@ -72,12 +72,7 @@ public class IdempotencyRecord {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    /**
-     * A fresh key, locked by the caller and already carrying the Stripe key it
-     * will charge under. Generating that key here - before any charge is
-     * attempted - is what lets a retry after an unknown outcome ask Stripe about
-     * the same charge instead of creating a new one.
-     */
+
     public static IdempotencyRecord started(Long userId, String idempotencyKey, String requestHash) {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         IdempotencyRecord record = new IdempotencyRecord();

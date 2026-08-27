@@ -1,9 +1,9 @@
 package hieunv.dev.netflixstack.payment.controller;
 
-import hieunv.dev.netflixstack.payment.PaymentService;
-import hieunv.dev.netflixstack.payment.dto.CreatePaymentRequest;
-import hieunv.dev.netflixstack.payment.dto.CreatePaymentResponse;
-import hieunv.dev.netflixstack.payment.dto.StoredResponse;
+import hieunv.dev.netflixstack.payment.dto.request.CreatePaymentRequest;
+import hieunv.dev.netflixstack.payment.dto.response.CreatePaymentResponse;
+import hieunv.dev.netflixstack.payment.dto.response.StoredResponse;
+import hieunv.dev.netflixstack.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +27,6 @@ public class PaymentController {
             @Valid @RequestBody CreatePaymentRequest request) {
 
         StoredResponse stored = paymentService.createPayment(idempotencyKey, request);
-        return ResponseEntity.status(HttpStatus.valueOf(stored.httpStatus())).body(stored.body());
+        return ResponseEntity.status(HttpStatus.valueOf(stored.getHttpStatus())).body(stored.getBody());
     }
 }

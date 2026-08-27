@@ -1,5 +1,6 @@
-package hieunv.dev.netflixstack.payment.idempotency;
+package hieunv.dev.netflixstack.payment.idempotency.repository;
 
+import hieunv.dev.netflixstack.payment.idempotency.entity.IdempotencyRecord;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -17,6 +18,4 @@ public interface IdempotencyRecordRepository extends JpaRepository<IdempotencyRe
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from IdempotencyRecord r where r.id = :id")
     Optional<IdempotencyRecord> lockById(@Param("id") Long id);
-
-    Optional<IdempotencyRecord> findByUserIdAndIdempotencyKey(Long userId, String key);
 }

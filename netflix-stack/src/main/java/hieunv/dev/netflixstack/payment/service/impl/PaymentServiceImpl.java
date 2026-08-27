@@ -1,9 +1,12 @@
-package hieunv.dev.netflixstack.payment;
+package hieunv.dev.netflixstack.payment.service.impl;
 
 import hieunv.dev.netflixstack.common.RecoveryPoint;
-import hieunv.dev.netflixstack.payment.dto.CreatePaymentRequest;
-import hieunv.dev.netflixstack.payment.dto.StoredResponse;
+import hieunv.dev.netflixstack.payment.dto.Acquisition;
+import hieunv.dev.netflixstack.payment.dto.ChargeIntent;
+import hieunv.dev.netflixstack.payment.dto.request.CreatePaymentRequest;
+import hieunv.dev.netflixstack.payment.dto.response.StoredResponse;
 import hieunv.dev.netflixstack.payment.idempotency.RequestHasher;
+import hieunv.dev.netflixstack.payment.service.PaymentService;
 import hieunv.dev.netflixstack.stripe.StripeCharge;
 import hieunv.dev.netflixstack.stripe.StripeClient;
 import hieunv.dev.netflixstack.stripe.StripeDeclinedException;
@@ -14,9 +17,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import static hieunv.dev.netflixstack.payment.PaymentPhases.Acquisition;
-import static hieunv.dev.netflixstack.payment.PaymentPhases.ChargeIntent;
 
 @Service
 @RequiredArgsConstructor
@@ -35,22 +35,18 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         String requestHash = RequestHasher.hash(
-                request.userId(), request.normalisedAmount(), request.normalisedCurrency());
+                request.getUserId(), request.normalisedAmount(), request.normalisedCurrency());
 
-        Acquisition acquisition = acquire(request.userId(), idempotencyKey, requestHash);
+        Acquisition acquisition = acquire(request.getUserId(), idempotencyKey, requestHash);
         if (acquisition.isReplay()) {
-            return replayOf(acquisition.replay());
+            return replayOf(acquisition.getReplay());
         }
 
-        Long recordId = acquisition.recordId();
-        RecoveryPoint point = acquisition.recoveryPoint();
+        Long recordId = acquisition.getRecordId();
+        RecoveryPoint point = acquisition.getRecoveryPoint();
 
         for (int pass = 0; pass < MAX_PHASE_TRANSITIONS; pass++) {
             if (point == RecoveryPoint.FINISHED) {
-                // Always read the frozen answer back rather than returning one
-                // built in memory: the caller who did the work then gets byte for
-                // byte what every later retry will get, so the replay path is
-                // exercised on the very first request instead of only in prod.
                 return phases.storedResponse(recordId);
             }
             point = switch (point) {
@@ -79,7 +75,7 @@ public class PaymentServiceImpl implements PaymentService {
         ChargeIntent intent = phases.chargeIntent(recordId);
         try {
             StripeCharge charge = stripeClient.createCharge(
-                    intent.stripeIdempotencyKey(), intent.userId(), intent.amount(), intent.currency());
+                    intent.getStripeIdempotencyKey(), intent.getUserId(), intent.getAmount(), intent.getCurrency());
             if (charge.replayed()) {
                 log.info("payment[{}] resumed onto an existing charge {} - not charged twice",
                         idempotencyKey, charge.id());
@@ -97,6 +93,6 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private StoredResponse replayOf(StoredResponse stored) {
-        return new StoredResponse(stored.httpStatus(), stored.body().asReplay());
+        return new StoredResponse(stored.getHttpStatus(), stored.getBody().asReplay());
     }
 }

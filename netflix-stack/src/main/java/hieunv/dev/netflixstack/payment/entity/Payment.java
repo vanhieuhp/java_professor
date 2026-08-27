@@ -1,4 +1,4 @@
-package hieunv.dev.netflixstack.payment;
+package hieunv.dev.netflixstack.payment.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

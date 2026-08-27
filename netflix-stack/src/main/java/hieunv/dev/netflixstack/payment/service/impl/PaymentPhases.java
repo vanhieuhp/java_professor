@@ -1,12 +1,17 @@
-package hieunv.dev.netflixstack.payment;
+package hieunv.dev.netflixstack.payment.service.impl;
 
 import hieunv.dev.netflixstack.common.IdempotencyStatus;
 import hieunv.dev.netflixstack.common.RecoveryPoint;
-import hieunv.dev.netflixstack.payment.dto.CreatePaymentRequest;
-import hieunv.dev.netflixstack.payment.dto.CreatePaymentResponse;
-import hieunv.dev.netflixstack.payment.dto.StoredResponse;
-import hieunv.dev.netflixstack.payment.idempotency.IdempotencyRecord;
-import hieunv.dev.netflixstack.payment.idempotency.IdempotencyRecordRepository;
+import hieunv.dev.netflixstack.payment.dto.Acquisition;
+import hieunv.dev.netflixstack.payment.dto.ChargeIntent;
+import hieunv.dev.netflixstack.payment.dto.request.CreatePaymentRequest;
+import hieunv.dev.netflixstack.payment.dto.response.CreatePaymentResponse;
+import hieunv.dev.netflixstack.payment.dto.response.StoredResponse;
+import hieunv.dev.netflixstack.payment.entity.Payment;
+import hieunv.dev.netflixstack.payment.entity.PaymentStatus;
+import hieunv.dev.netflixstack.payment.idempotency.entity.IdempotencyRecord;
+import hieunv.dev.netflixstack.payment.idempotency.repository.IdempotencyRecordRepository;
+import hieunv.dev.netflixstack.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +23,6 @@ import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -33,20 +37,6 @@ public class PaymentPhases {
 
     @Value("${netflix-stack.payment.lock-lease:90s}")
     private Duration lockLease;
-
-
-    public record Acquisition(Long recordId, RecoveryPoint recoveryPoint, StoredResponse replay) {
-
-        public boolean isReplay() {
-            return replay != null;
-        }
-    }
-
-    public record ChargeIntent(String stripeIdempotencyKey,
-                               long userId,
-                               BigDecimal amount,
-                               String currency) {
-    }
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -94,7 +84,7 @@ public class PaymentPhases {
         }
 
         Payment payment = paymentRepository.save(Payment.pending(
-                request.userId(), request.normalisedAmount(), request.normalisedCurrency()));
+                request.getUserId(), request.normalisedAmount(), request.normalisedCurrency()));
 
         record.setPaymentId(payment.getId());
         record.advanceTo(RecoveryPoint.PAYMENT_CREATED);
@@ -138,8 +128,8 @@ public class PaymentPhases {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RecoveryPoint complete(Long recordId) {
         IdempotencyRecord record = lock(recordId);
-        if (record.getRecoveryPoint() == RecoveryPoint.FINISHED) {
-            return RecoveryPoint.FINISHED;
+        if (record.getRecoveryPoint() != RecoveryPoint.CHARGE_CREATED) {
+            return record.getRecoveryPoint();
         }
 
         Payment payment = payment(record);
@@ -157,8 +147,8 @@ public class PaymentPhases {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RecoveryPoint fail(Long recordId, String reason) {
         IdempotencyRecord record = lock(recordId);
-        if (record.getRecoveryPoint() == RecoveryPoint.FINISHED) {
-            return RecoveryPoint.FINISHED;
+        if (record.getRecoveryPoint() != RecoveryPoint.PAYMENT_CREATED) {
+            return record.getRecoveryPoint();
         }
 
         Payment payment = payment(record);
